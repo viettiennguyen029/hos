@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test",
+    "test": "hardhat test && hardhat test scripts/deploy.test.ts",
     "deploy:fuji": "hardhat run scripts/deploy.ts --network avalancheFuji",
     "deploy:mainnet": "hardhat run scripts/deploy.ts --network avalanche"
   },
