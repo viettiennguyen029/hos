@@ -144,5 +144,54 @@ describe("EscrowManager", () => {
     });
   });
 
+  describe("deposit", () => {
+    async function registerBooking() {
+      const fixture = await loadFixture(deployEscrowFixture);
+      const id = bookingId("deposit-booking");
+      await fixture.escrow
+        .connect(fixture.operator)
+        .registerBooking(
+          id,
+          fixture.organizer.address,
+          fixture.talent.address,
+          await fixture.token.getAddress(),
+          1_000_000n,
+          500
+        );
+      await fixture.token.mint(fixture.organizer.address, 1_000_000n);
+      return { ...fixture, id };
+    }
+
+    it("pulls the exact amount from the organizer and marks the escrow funded", async () => {
+      const { escrow, token, organizer, id } = await registerBooking();
+
+      await token.connect(organizer).approve(await escrow.getAddress(), 1_000_000n);
+      await escrow.connect(organizer).deposit(id);
+
+      expect(await token.balanceOf(await escrow.getAddress())).to.equal(1_000_000n);
+      const record = await escrow.getEscrow(id);
+      expect(record.state).to.equal(2n); // State.Funded
+    });
+
+    it("reverts when called by someone other than the registered organizer", async () => {
+      const { escrow, token, organizer, stranger, id } = await registerBooking();
+
+      await token.connect(organizer).approve(await escrow.getAddress(), 1_000_000n);
+
+      await expect(
+        escrow.connect(stranger).deposit(id)
+      ).to.be.revertedWithCustomError(escrow, "NotAuthorizedForBooking");
+    });
+
+    it("reverts when the booking isn't in the Registered state", async () => {
+      const { escrow, organizer } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("never-registered");
+
+      await expect(
+        escrow.connect(organizer).deposit(id)
+      ).to.be.revertedWithCustomError(escrow, "InvalidState");
+    });
+  });
+
   // --- later tasks append additional describe() blocks here ---
 });

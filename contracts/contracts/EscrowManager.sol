@@ -125,6 +125,21 @@ contract EscrowManager is
         emit BookingRegistered(bookingId, organizer, talent, token, amount, feeBps);
     }
 
+    function deposit(bytes32 bookingId) external nonReentrant whenNotPaused {
+        Escrow storage escrow = escrows[bookingId];
+        if (escrow.state != State.Registered) {
+            revert InvalidState(bookingId, State.Registered, escrow.state);
+        }
+        if (_msgSender() != escrow.organizer) {
+            revert NotAuthorizedForBooking(bookingId, _msgSender());
+        }
+
+        escrow.state = State.Funded;
+        IERC20(escrow.token).safeTransferFrom(escrow.organizer, address(this), escrow.amount);
+
+        emit Deposited(bookingId);
+    }
+
     function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     function _msgSender() internal view override(ContextUpgradeable, ERC2771ContextUpgradeable) returns (address) {
