@@ -358,5 +358,30 @@ describe("EscrowManager", () => {
     });
   });
 
+  describe("reentrancy protection", () => {
+    it("reverts a reentrant call into releaseToTalent triggered from the token's transfer hook", async () => {
+      const { escrow, operator, organizer, talent } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("reentrancy-booking");
+
+      const MaliciousToken = await ethers.getContractFactory("MaliciousReentrantERC20");
+      const maliciousToken = await MaliciousToken.deploy();
+      await maliciousToken.waitForDeployment();
+
+      await escrow
+        .connect(operator)
+        .registerBooking(id, organizer.address, talent.address, await maliciousToken.getAddress(), 1_000_000n, 0);
+      await maliciousToken.mint(organizer.address, 1_000_000n);
+      await maliciousToken.connect(organizer).approve(await escrow.getAddress(), 1_000_000n);
+      await escrow.connect(organizer).deposit(id);
+
+      await maliciousToken.arm(await escrow.getAddress(), id);
+
+      await expect(escrow.connect(organizer).releaseToTalent(id)).to.be.revertedWithCustomError(
+        escrow,
+        "ReentrancyGuardReentrantCall"
+      );
+    });
+  });
+
   // --- later tasks append additional describe() blocks here ---
 });
