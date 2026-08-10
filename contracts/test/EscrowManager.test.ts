@@ -442,5 +442,40 @@ describe("EscrowManager", () => {
     });
   });
 
+  describe("upgradeability", () => {
+    it("preserves existing escrow storage after upgrading to a new implementation", async () => {
+      const { escrow, forwarder, admin, operator, token, organizer, talent } =
+        await loadFixture(deployEscrowFixture);
+      const id = bookingId("upgrade-booking");
+
+      await escrow
+        .connect(operator)
+        .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 1_000_000n, 500);
+
+      const EscrowManagerV2Mock = await ethers.getContractFactory("EscrowManagerV2Mock", admin);
+      const upgraded = await upgrades.upgradeProxy(await escrow.getAddress(), EscrowManagerV2Mock, {
+        constructorArgs: [await forwarder.getAddress()],
+        unsafeAllow: ["constructor", "state-variable-immutable"],
+      });
+
+      const record = await upgraded.getEscrow(id);
+      expect(record.organizer).to.equal(organizer.address);
+      expect(record.amount).to.equal(1_000_000n);
+      expect(await upgraded.VERSION()).to.equal("v2");
+    });
+
+    it("reverts an upgrade attempted by a non-default-admin", async () => {
+      const { escrow, forwarder, stranger } = await loadFixture(deployEscrowFixture);
+
+      const EscrowManagerV2Mock = await ethers.getContractFactory("EscrowManagerV2Mock", stranger);
+      await expect(
+        upgrades.upgradeProxy(await escrow.getAddress(), EscrowManagerV2Mock, {
+          constructorArgs: [await forwarder.getAddress()],
+          unsafeAllow: ["constructor", "state-variable-immutable"],
+        })
+      ).to.be.reverted;
+    });
+  });
+
   // --- later tasks append additional describe() blocks here ---
 });
