@@ -24,3 +24,17 @@
 
 - Working on non-secret config (ports, feature flags, public URLs)
 - Reading or explaining code — no `.env` changes needed
+
+## Blockchain wallet key encryption (`WALLET_MASTER_KEY`)
+
+Custodial wallet private keys (see
+`docs/superpowers/specs/2026-08-10-blockchain-escrow-payment-design.md`)
+are encrypted at rest with AES-256-GCM using a single master key read from
+the `WALLET_MASTER_KEY` env var — an interim choice made explicitly
+because this project has not yet picked a cloud secret store (see the
+placeholder above). Access is behind a `KeyEncryptionProvider` interface so
+this can be swapped for a `CloudKmsKeyProvider` (AWS/GCP KMS envelope
+encryption) later with no call-site changes. Until then,
+`WALLET_MASTER_KEY` is itself the single highest-value secret in the
+system — treat its rotation and access the same way you would a root
+credential, and never let it touch a client bundle or log line.
