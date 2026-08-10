@@ -93,6 +93,38 @@ contract EscrowManager is
         return escrows[bookingId];
     }
 
+    function registerBooking(
+        bytes32 bookingId,
+        address organizer,
+        address talent,
+        address token,
+        uint256 amount,
+        uint16 feeBps
+    ) external onlyRole(OPERATOR_ROLE) whenNotPaused {
+        Escrow storage escrow = escrows[bookingId];
+        if (escrow.state != State.None) {
+            revert InvalidState(bookingId, State.None, escrow.state);
+        }
+        if (organizer == address(0) || talent == address(0) || token == address(0)) {
+            revert ZeroAddress();
+        }
+        if (amount == 0) {
+            revert ZeroAmount();
+        }
+        if (feeBps > MAX_BPS) {
+            revert FeeTooHigh(feeBps);
+        }
+
+        escrow.organizer = organizer;
+        escrow.talent = talent;
+        escrow.token = token;
+        escrow.amount = amount;
+        escrow.feeBps = feeBps;
+        escrow.state = State.Registered;
+
+        emit BookingRegistered(bookingId, organizer, talent, token, amount, feeBps);
+    }
+
     function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     function _msgSender() internal view override(ContextUpgradeable, ERC2771ContextUpgradeable) returns (address) {

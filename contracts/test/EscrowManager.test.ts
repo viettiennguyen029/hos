@@ -77,5 +77,72 @@ describe("EscrowManager", () => {
     });
   });
 
+  describe("registerBooking", () => {
+    it("locks in the booking's parties, token, amount, and fee", async () => {
+      const { escrow, operator, token, organizer, talent } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("booking-1");
+
+      await escrow
+        .connect(operator)
+        .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 1_000_000n, 500);
+
+      const record = await escrow.getEscrow(id);
+      expect(record.organizer).to.equal(organizer.address);
+      expect(record.talent).to.equal(talent.address);
+      expect(record.token).to.equal(await token.getAddress());
+      expect(record.amount).to.equal(1_000_000n);
+      expect(record.feeBps).to.equal(500);
+      expect(record.state).to.equal(1n); // State.Registered
+    });
+
+    it("reverts when called by a non-operator", async () => {
+      const { escrow, stranger, token, organizer, talent } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("booking-2");
+
+      await expect(
+        escrow
+          .connect(stranger)
+          .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 1_000_000n, 500)
+      ).to.be.reverted;
+    });
+
+    it("reverts when the booking is already registered", async () => {
+      const { escrow, operator, token, organizer, talent } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("booking-3");
+
+      await escrow
+        .connect(operator)
+        .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 1_000_000n, 500);
+
+      await expect(
+        escrow
+          .connect(operator)
+          .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 1_000_000n, 500)
+      ).to.be.revertedWithCustomError(escrow, "InvalidState");
+    });
+
+    it("reverts when feeBps exceeds MAX_BPS", async () => {
+      const { escrow, operator, token, organizer, talent } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("booking-4");
+
+      await expect(
+        escrow
+          .connect(operator)
+          .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 1_000_000n, 10_001)
+      ).to.be.revertedWithCustomError(escrow, "FeeTooHigh");
+    });
+
+    it("reverts when amount is zero", async () => {
+      const { escrow, operator, token, organizer, talent } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("booking-5");
+
+      await expect(
+        escrow
+          .connect(operator)
+          .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 0n, 500)
+      ).to.be.revertedWithCustomError(escrow, "ZeroAmount");
+    });
+  });
+
   // --- later tasks append additional describe() blocks here ---
 });
