@@ -383,5 +383,64 @@ describe("EscrowManager", () => {
     });
   });
 
+  describe("gas-sponsored meta-transactions", () => {
+    it("resolves _msgSender() to the organizer when deposit is called through the trusted forwarder", async () => {
+      const { escrow, forwarder, token, operator, organizer, talent, deployer } =
+        await loadFixture(deployEscrowFixture);
+      const id = bookingId("meta-tx-booking");
+
+      await escrow
+        .connect(operator)
+        .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 1_000_000n, 500);
+      await token.mint(organizer.address, 1_000_000n);
+      await token.connect(organizer).approve(await escrow.getAddress(), 1_000_000n);
+
+      const network = await ethers.provider.getNetwork();
+      const domain = {
+        name: "HosEscrowForwarder",
+        version: "1",
+        chainId: network.chainId,
+        verifyingContract: await forwarder.getAddress(),
+      };
+      const types = {
+        ForwardRequest: [
+          { name: "from", type: "address" },
+          { name: "to", type: "address" },
+          { name: "value", type: "uint256" },
+          { name: "gas", type: "uint256" },
+          { name: "nonce", type: "uint256" },
+          { name: "deadline", type: "uint48" },
+          { name: "data", type: "bytes" },
+        ],
+      };
+
+      const nonce = await forwarder.nonces(organizer.address);
+      const data = escrow.interface.encodeFunctionData("deposit", [id]);
+      const deadline = Math.floor(Date.now() / 1000) + 3600;
+
+      // Shared fields between the signed EIP-712 message and the on-chain
+      // execute() call. `nonce` is part of the signed payload only —
+      // ERC2771Forwarder's ForwardRequestData struct has no nonce field;
+      // the contract reads the expected nonce from its own storage during
+      // verification instead of trusting a caller-supplied value.
+      const requestCore = {
+        from: organizer.address,
+        to: await escrow.getAddress(),
+        value: 0n,
+        gas: 500_000n,
+        deadline,
+      };
+
+      const signature = await organizer.signTypedData(domain, types, { ...requestCore, nonce, data });
+
+      // The relayer (here, `deployer`) submits and pays gas — never the organizer.
+      await forwarder.connect(deployer).execute({ ...requestCore, data, signature });
+
+      const record = await escrow.getEscrow(id);
+      expect(record.state).to.equal(2n); // State.Funded — proves _msgSender() resolved to organizer
+      expect(await token.balanceOf(await escrow.getAddress())).to.equal(1_000_000n);
+    });
+  });
+
   // --- later tasks append additional describe() blocks here ---
 });
