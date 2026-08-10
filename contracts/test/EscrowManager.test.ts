@@ -304,5 +304,59 @@ describe("EscrowManager", () => {
     });
   });
 
+  describe("admin configuration", () => {
+    it("lets the default admin update the platform fee recipient", async () => {
+      const { escrow, admin, stranger } = await loadFixture(deployEscrowFixture);
+
+      await escrow.connect(admin).setPlatformFeeRecipient(stranger.address);
+
+      expect(await escrow.platformFeeRecipient()).to.equal(stranger.address);
+    });
+
+    it("reverts when a non-admin tries to update the fee recipient", async () => {
+      const { escrow, stranger } = await loadFixture(deployEscrowFixture);
+
+      await expect(escrow.connect(stranger).setPlatformFeeRecipient(stranger.address)).to.be.reverted;
+    });
+  });
+
+  describe("pausing", () => {
+    it("blocks registerBooking while paused", async () => {
+      const { escrow, admin, operator, token, organizer, talent } = await loadFixture(deployEscrowFixture);
+      await escrow.connect(admin).pause();
+
+      await expect(
+        escrow
+          .connect(operator)
+          .registerBooking(
+            bookingId("paused-booking"),
+            organizer.address,
+            talent.address,
+            await token.getAddress(),
+            1_000_000n,
+            500
+          )
+      ).to.be.reverted;
+    });
+
+    it("does not block refundOrganizer on an already-funded booking", async () => {
+      const { escrow, admin, operator, token, organizer, talent } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("paused-but-funded");
+
+      await escrow
+        .connect(operator)
+        .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 1_000_000n, 500);
+      await token.mint(organizer.address, 1_000_000n);
+      await token.connect(organizer).approve(await escrow.getAddress(), 1_000_000n);
+      await escrow.connect(organizer).deposit(id);
+
+      await escrow.connect(admin).pause();
+      await escrow.connect(admin).refundOrganizer(id);
+
+      const record = await escrow.getEscrow(id);
+      expect(record.state).to.equal(4n); // State.Refunded
+    });
+  });
+
   // --- later tasks append additional describe() blocks here ---
 });

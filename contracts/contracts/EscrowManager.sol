@@ -177,6 +177,22 @@ contract EscrowManager is
         emit Refunded(bookingId, escrow.amount);
     }
 
+    function setPlatformFeeRecipient(address recipient) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (recipient == address(0)) {
+            revert ZeroAddress();
+        }
+        platformFeeRecipient = recipient;
+        emit PlatformFeeRecipientUpdated(recipient);
+    }
+
+    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause();
+    }
+
     function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     function _msgSender() internal view override(ContextUpgradeable, ERC2771ContextUpgradeable) returns (address) {
