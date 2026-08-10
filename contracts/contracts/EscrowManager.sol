@@ -164,6 +164,19 @@ contract EscrowManager is
         emit Released(bookingId, talentAmount, fee);
     }
 
+    function refundOrganizer(bytes32 bookingId) external onlyRole(ADMIN_ROLE) nonReentrant {
+        Escrow storage escrow = escrows[bookingId];
+        if (escrow.state != State.Funded) {
+            revert InvalidState(bookingId, State.Funded, escrow.state);
+        }
+
+        escrow.state = State.Refunded;
+
+        IERC20(escrow.token).safeTransfer(escrow.organizer, escrow.amount);
+
+        emit Refunded(bookingId, escrow.amount);
+    }
+
     function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     function _msgSender() internal view override(ContextUpgradeable, ERC2771ContextUpgradeable) returns (address) {

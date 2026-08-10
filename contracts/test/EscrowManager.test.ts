@@ -258,5 +258,51 @@ describe("EscrowManager", () => {
     });
   });
 
+  describe("refundOrganizer", () => {
+    async function fundedBooking() {
+      const fixture = await loadFixture(deployEscrowFixture);
+      const id = bookingId("refund-booking");
+      await fixture.escrow
+        .connect(fixture.operator)
+        .registerBooking(
+          id,
+          fixture.organizer.address,
+          fixture.talent.address,
+          await fixture.token.getAddress(),
+          1_000_000n,
+          500
+        );
+      await fixture.token.mint(fixture.organizer.address, 1_000_000n);
+      await fixture.token.connect(fixture.organizer).approve(await fixture.escrow.getAddress(), 1_000_000n);
+      await fixture.escrow.connect(fixture.organizer).deposit(id);
+      return { ...fixture, id };
+    }
+
+    it("returns the full deposit to the organizer when the admin refunds", async () => {
+      const { escrow, token, organizer, admin, id } = await fundedBooking();
+
+      await escrow.connect(admin).refundOrganizer(id);
+
+      expect(await token.balanceOf(organizer.address)).to.equal(1_000_000n);
+      const record = await escrow.getEscrow(id);
+      expect(record.state).to.equal(4n); // State.Refunded
+    });
+
+    it("reverts when called by the organizer", async () => {
+      const { escrow, organizer, id } = await fundedBooking();
+
+      await expect(escrow.connect(organizer).refundOrganizer(id)).to.be.reverted;
+    });
+
+    it("reverts when the booking isn't Funded", async () => {
+      const { escrow, admin } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("never-funded-refund");
+
+      await expect(
+        escrow.connect(admin).refundOrganizer(id)
+      ).to.be.revertedWithCustomError(escrow, "InvalidState");
+    });
+  });
+
   // --- later tasks append additional describe() blocks here ---
 });
