@@ -232,6 +232,15 @@ describe("EscrowManager", () => {
       expect(await token.balanceOf(talent.address)).to.equal(1_000_000n);
     });
 
+    it("sends the full amount to the fee recipient and nothing to the talent when feeBps is MAX_BPS", async () => {
+      const { escrow, token, organizer, talent, feeRecipient, id } = await fundedBooking(10_000);
+
+      await expect(escrow.connect(organizer).releaseToTalent(id)).to.not.be.reverted;
+
+      expect(await token.balanceOf(talent.address)).to.equal(0n);
+      expect(await token.balanceOf(feeRecipient.address)).to.equal(1_000_000n);
+    });
+
     it("allows the admin to release on the organizer's behalf", async () => {
       const { escrow, admin, talent, token, id } = await fundedBooking(500);
 
@@ -355,6 +364,39 @@ describe("EscrowManager", () => {
 
       const record = await escrow.getEscrow(id);
       expect(record.state).to.equal(4n); // State.Refunded
+    });
+
+    it("blocks deposit while paused", async () => {
+      const { escrow, admin, operator, token, organizer, talent } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("paused-deposit");
+
+      await escrow
+        .connect(operator)
+        .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 1_000_000n, 500);
+      await token.mint(organizer.address, 1_000_000n);
+      await token.connect(organizer).approve(await escrow.getAddress(), 1_000_000n);
+
+      await escrow.connect(admin).pause();
+
+      await expect(escrow.connect(organizer).deposit(id)).to.be.reverted;
+    });
+
+    it("does not block releaseToTalent on an already-funded booking", async () => {
+      const { escrow, admin, operator, token, organizer, talent } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("paused-but-releasable");
+
+      await escrow
+        .connect(operator)
+        .registerBooking(id, organizer.address, talent.address, await token.getAddress(), 1_000_000n, 500);
+      await token.mint(organizer.address, 1_000_000n);
+      await token.connect(organizer).approve(await escrow.getAddress(), 1_000_000n);
+      await escrow.connect(organizer).deposit(id);
+
+      await escrow.connect(admin).pause();
+      await escrow.connect(admin).releaseToTalent(id);
+
+      const record = await escrow.getEscrow(id);
+      expect(record.state).to.equal(3n); // State.Released
     });
   });
 

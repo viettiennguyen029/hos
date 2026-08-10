@@ -11,6 +11,9 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
+      // Pinned explicitly (solc 0.8.24's implicit default is actually "cancun", not "paris")
+      // so nothing here can depend on Cancun-only transient-storage opcodes, which Avalanche
+      // C-Chain's support isn't confirmed for.
       evmVersion: "shanghai",
     },
   },

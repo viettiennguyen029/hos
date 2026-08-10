@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "bun test --isolate"
+    "test": "bun test --isolate src happydom.test.ts happydom-matchers.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
