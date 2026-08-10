@@ -140,6 +140,30 @@ contract EscrowManager is
         emit Deposited(bookingId);
     }
 
+    function releaseToTalent(bytes32 bookingId) external nonReentrant {
+        Escrow storage escrow = escrows[bookingId];
+        if (escrow.state != State.Funded) {
+            revert InvalidState(bookingId, State.Funded, escrow.state);
+        }
+
+        address caller = _msgSender();
+        if (caller != escrow.organizer && !hasRole(ADMIN_ROLE, caller)) {
+            revert NotAuthorizedForBooking(bookingId, caller);
+        }
+
+        escrow.state = State.Released;
+
+        uint256 fee = (escrow.amount * escrow.feeBps) / MAX_BPS;
+        uint256 talentAmount = escrow.amount - fee;
+
+        IERC20(escrow.token).safeTransfer(escrow.talent, talentAmount);
+        if (fee > 0) {
+            IERC20(escrow.token).safeTransfer(platformFeeRecipient, fee);
+        }
+
+        emit Released(bookingId, talentAmount, fee);
+    }
+
     function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     function _msgSender() internal view override(ContextUpgradeable, ERC2771ContextUpgradeable) returns (address) {

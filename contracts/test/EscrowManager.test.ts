@@ -193,5 +193,70 @@ describe("EscrowManager", () => {
     });
   });
 
+  describe("releaseToTalent", () => {
+    async function fundedBooking(feeBps: number) {
+      const fixture = await loadFixture(deployEscrowFixture);
+      const id = bookingId("release-booking");
+      await fixture.escrow
+        .connect(fixture.operator)
+        .registerBooking(
+          id,
+          fixture.organizer.address,
+          fixture.talent.address,
+          await fixture.token.getAddress(),
+          1_000_000n,
+          feeBps
+        );
+      await fixture.token.mint(fixture.organizer.address, 1_000_000n);
+      await fixture.token.connect(fixture.organizer).approve(await fixture.escrow.getAddress(), 1_000_000n);
+      await fixture.escrow.connect(fixture.organizer).deposit(id);
+      return { ...fixture, id };
+    }
+
+    it("splits the deposit between talent and platform fee recipient when the organizer releases", async () => {
+      const { escrow, token, organizer, talent, feeRecipient, id } = await fundedBooking(500);
+
+      await escrow.connect(organizer).releaseToTalent(id);
+
+      expect(await token.balanceOf(talent.address)).to.equal(950_000n);
+      expect(await token.balanceOf(feeRecipient.address)).to.equal(50_000n);
+      const record = await escrow.getEscrow(id);
+      expect(record.state).to.equal(3n); // State.Released
+    });
+
+    it("sends the full amount to the talent when feeBps is zero", async () => {
+      const { escrow, token, organizer, talent, id } = await fundedBooking(0);
+
+      await escrow.connect(organizer).releaseToTalent(id);
+
+      expect(await token.balanceOf(talent.address)).to.equal(1_000_000n);
+    });
+
+    it("allows the admin to release on the organizer's behalf", async () => {
+      const { escrow, admin, talent, token, id } = await fundedBooking(500);
+
+      await escrow.connect(admin).releaseToTalent(id);
+
+      expect(await token.balanceOf(talent.address)).to.equal(950_000n);
+    });
+
+    it("reverts when called by neither the organizer nor an admin", async () => {
+      const { escrow, stranger, id } = await fundedBooking(500);
+
+      await expect(
+        escrow.connect(stranger).releaseToTalent(id)
+      ).to.be.revertedWithCustomError(escrow, "NotAuthorizedForBooking");
+    });
+
+    it("reverts when the booking isn't Funded", async () => {
+      const { escrow, organizer } = await loadFixture(deployEscrowFixture);
+      const id = bookingId("never-funded");
+
+      await expect(
+        escrow.connect(organizer).releaseToTalent(id)
+      ).to.be.revertedWithCustomError(escrow, "InvalidState");
+    });
+  });
+
   // --- later tasks append additional describe() blocks here ---
 });
