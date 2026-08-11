@@ -30,7 +30,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
   const [checked, setChecked] = useState<Record<string, boolean>>(
     Object.fromEntries(cartItems.map((i) => [i.id, true]))
   );
-  const [paymentChannel, setPaymentChannel] = useState<"fiat" | "crypto">("fiat");
+  const [paymentChannel, setPaymentChannel] = useState<"fiat" | "crypto">("crypto");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [sent, setSent] = useState(false);
@@ -188,17 +188,19 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
             <div className="grid grid-cols-2 gap-3">
               {(
                 [
-                  { value: "fiat" as const, label: "Fiat Payment" },
-                  { value: "crypto" as const, label: "Crypto Payment" },
+                  { value: "fiat" as const, label: "Fiat Payment", disabled: true },
+                  { value: "crypto" as const, label: "Crypto Payment", disabled: false },
                 ]
-              ).map(({ value, label }) => (
+              ).map(({ value, label, disabled }) => (
                 <button
                   key={value}
                   type="button"
+                  disabled={disabled}
                   onClick={() => setPaymentChannel(value)}
                   className={cn(
                     "flex items-center gap-2 rounded-[8px] border border-transparent bg-white/5 px-4 py-3 text-sm font-medium text-foreground transition-colors",
-                    paymentChannel === value && "border-primary bg-primary/5"
+                    paymentChannel === value && "border-primary bg-primary/5",
+                    disabled && "cursor-not-allowed opacity-50"
                   )}
                 >
                   <span
@@ -209,7 +211,12 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
                   >
                     {paymentChannel === value && <span className="size-2 rounded-full bg-primary" />}
                   </span>
-                  {label}
+                  <span className="flex flex-col items-start">
+                    {label}
+                    {disabled && (
+                      <span className="text-[10px] font-normal text-muted-foreground">Coming soon</span>
+                    )}
+                  </span>
                 </button>
               ))}
             </div>

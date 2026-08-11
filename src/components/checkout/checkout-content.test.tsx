@@ -61,16 +61,33 @@ describe("CheckoutContent — payment channel", () => {
     expect(screen.getByRole("button", { name: /crypto payment/i })).toBeDefined();
   });
 
-  it("defaults to Fiat Payment and sends paymentChannel: fiat when checking out", async () => {
+  it("defaults to Crypto Payment and sends paymentChannel: crypto when checking out", async () => {
     render(<CheckoutContent cartItems={[makeCartItem()]} />);
     fireEvent.click(screen.getByRole("button", { name: /send booking request/i }));
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(checkoutCartCalls[0]?.get("paymentChannel")).toBe("fiat");
+    expect(checkoutCartCalls[0]?.get("paymentChannel")).toBe("crypto");
   });
 
   it("sends paymentChannel: crypto when Crypto Payment is selected", async () => {
     render(<CheckoutContent cartItems={[makeCartItem()]} />);
     fireEvent.click(screen.getByRole("button", { name: /crypto payment/i }));
+    fireEvent.click(screen.getByRole("button", { name: /send booking request/i }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(checkoutCartCalls[0]?.get("paymentChannel")).toBe("crypto");
+  });
+
+  it("renders the Fiat Payment button as disabled with a Coming soon label, Crypto Payment enabled", () => {
+    render(<CheckoutContent cartItems={[makeCartItem()]} />);
+    const fiatButton = screen.getByRole("button", { name: /fiat payment/i });
+    const cryptoButton = screen.getByRole("button", { name: /crypto payment/i });
+    expect(fiatButton.hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText(/coming soon/i)).toBeDefined();
+    expect(cryptoButton.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("does nothing when the disabled Fiat Payment button is clicked — still sends paymentChannel: crypto", async () => {
+    render(<CheckoutContent cartItems={[makeCartItem()]} />);
+    fireEvent.click(screen.getByRole("button", { name: /fiat payment/i }));
     fireEvent.click(screen.getByRole("button", { name: /send booking request/i }));
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(checkoutCartCalls[0]?.get("paymentChannel")).toBe("crypto");
