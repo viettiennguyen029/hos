@@ -170,3 +170,74 @@ describe("depositEscrow", () => {
     delete process.env.ESCROW_MANAGER_ADDRESS;
   });
 });
+
+describe("releaseEscrowToTalent", () => {
+  it("relays releaseToTalent signed by the organizer", async () => {
+    process.env.ESCROW_MANAGER_ADDRESS = ESCROW_ADDRESS;
+    const relayCalls: { to: string; userId: string }[] = [];
+    const relayAsUserFake = async (_supabase: SupabaseClient, userId: string, to: `0x${string}`) => {
+      relayCalls.push({ to, userId });
+      return "0xreleasetx" as const;
+    };
+
+    const { releaseEscrowToTalent } = await import("@/lib/chain/escrow");
+    const bookingId = "0x1111111122223333444455555555555500000000000000000000000000000000".slice(0, 66) as `0x${string}`;
+    const txHash = await releaseEscrowToTalent({} as never, "user-1", bookingId, { relayAsUser: relayAsUserFake as never });
+
+    expect(txHash).toBe("0xreleasetx");
+    expect(relayCalls).toEqual([{ to: ESCROW_ADDRESS, userId: "user-1" }]);
+    delete process.env.ESCROW_MANAGER_ADDRESS;
+  });
+});
+
+describe("releaseEscrowAsAdmin", () => {
+  it("submits releaseToTalent signed by the admin wallet", async () => {
+    process.env.ESCROW_MANAGER_ADDRESS = ESCROW_ADDRESS;
+    const { client, eqCalls } = makeSupabase();
+    let writeContractArgs: unknown;
+    const walletClientFactory = () => ({
+      writeContract: async (args: unknown) => {
+        writeContractArgs = args;
+        return "0xadminreleasetx" as const;
+      },
+    });
+
+    const { releaseEscrowAsAdmin } = await import("@/lib/chain/escrow");
+    const bookingId = "0x1111111122223333444455555555555500000000000000000000000000000000".slice(0, 66) as `0x${string}`;
+    const txHash = await releaseEscrowAsAdmin(client, bookingId, {
+      walletClientFactory: walletClientFactory as never,
+      keyProvider: testKeyProvider,
+    });
+
+    expect(txHash).toBe("0xadminreleasetx");
+    expect(eqCalls).toEqual([["label", "admin"], ["chain", "avalanche"]]);
+    expect((writeContractArgs as { functionName: string }).functionName).toBe("releaseToTalent");
+    delete process.env.ESCROW_MANAGER_ADDRESS;
+  });
+});
+
+describe("refundEscrowAsAdmin", () => {
+  it("submits refundOrganizer signed by the admin wallet", async () => {
+    process.env.ESCROW_MANAGER_ADDRESS = ESCROW_ADDRESS;
+    const { client, eqCalls } = makeSupabase();
+    let writeContractArgs: unknown;
+    const walletClientFactory = () => ({
+      writeContract: async (args: unknown) => {
+        writeContractArgs = args;
+        return "0xrefundtx" as const;
+      },
+    });
+
+    const { refundEscrowAsAdmin } = await import("@/lib/chain/escrow");
+    const bookingId = "0x1111111122223333444455555555555500000000000000000000000000000000".slice(0, 66) as `0x${string}`;
+    const txHash = await refundEscrowAsAdmin(client, bookingId, {
+      walletClientFactory: walletClientFactory as never,
+      keyProvider: testKeyProvider,
+    });
+
+    expect(txHash).toBe("0xrefundtx");
+    expect(eqCalls).toEqual([["label", "admin"], ["chain", "avalanche"]]);
+    expect((writeContractArgs as { functionName: string }).functionName).toBe("refundOrganizer");
+    delete process.env.ESCROW_MANAGER_ADDRESS;
+  });
+});

@@ -83,3 +83,54 @@ export async function depositEscrow(
 
   return { approveTxHash, depositTxHash };
 }
+
+export async function releaseEscrowToTalent(
+  supabase: SupabaseClient,
+  userId: string,
+  bookingId: `0x${string}`,
+  deps: RelayedCallDeps = {}
+): Promise<`0x${string}`> {
+  const relay = deps.relayAsUser ?? relayAsUserDefault;
+  const data = encodeFunctionData({ abi: escrowManagerAbi, functionName: "releaseToTalent", args: [bookingId] });
+  return relay(supabase, userId, getEscrowManagerAddress(), data);
+}
+
+export async function releaseEscrowAsAdmin(
+  supabase: SupabaseClient,
+  bookingId: `0x${string}`,
+  deps: DirectCallDeps = {}
+): Promise<`0x${string}`> {
+  const walletClientFactory = deps.walletClientFactory ?? getWalletClient;
+  const keyProvider = deps.keyProvider ?? getKeyProvider();
+  const adminAccount = await getSigningAccountForPlatformWallet(supabase, "admin", keyProvider);
+  const client = walletClientFactory(adminAccount);
+
+  return client.writeContract({
+    address: getEscrowManagerAddress(),
+    abi: escrowManagerAbi,
+    functionName: "releaseToTalent",
+    args: [bookingId],
+    account: adminAccount,
+    chain: null,
+  }) as Promise<`0x${string}`>;
+}
+
+export async function refundEscrowAsAdmin(
+  supabase: SupabaseClient,
+  bookingId: `0x${string}`,
+  deps: DirectCallDeps = {}
+): Promise<`0x${string}`> {
+  const walletClientFactory = deps.walletClientFactory ?? getWalletClient;
+  const keyProvider = deps.keyProvider ?? getKeyProvider();
+  const adminAccount = await getSigningAccountForPlatformWallet(supabase, "admin", keyProvider);
+  const client = walletClientFactory(adminAccount);
+
+  return client.writeContract({
+    address: getEscrowManagerAddress(),
+    abi: escrowManagerAbi,
+    functionName: "refundOrganizer",
+    args: [bookingId],
+    account: adminAccount,
+    chain: null,
+  }) as Promise<`0x${string}`>;
+}
