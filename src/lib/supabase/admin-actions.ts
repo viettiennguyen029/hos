@@ -34,3 +34,20 @@ export async function resolveDisputeByRefund(bookingId: string): Promise<{ error
   }
   return { success: true };
 }
+
+export async function updateTalentCommission(
+  talentId: string,
+  commissionBps: number
+): Promise<{ error: string } | { success: true }> {
+  if (!(await isCurrentUserAdmin())) return { error: "Admin access required." };
+  if (commissionBps < 0 || commissionBps > 10000) {
+    return { error: "Commission must be between 0 and 10000 basis points." };
+  }
+
+  const { error } = await createServiceClient()
+    .from("profiles")
+    .update({ commission_bps: commissionBps })
+    .eq("id", talentId);
+  if (error) return { error: error.message };
+  return { success: true };
+}

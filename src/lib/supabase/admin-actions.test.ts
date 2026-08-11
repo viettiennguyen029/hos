@@ -49,3 +49,40 @@ describe("resolveDisputeByRefund", () => {
     expect(await resolveDisputeByRefund("booking-1")).toEqual({ error: "Admin access required." });
   });
 });
+
+describe("updateTalentCommission", () => {
+  it("rejects when the caller is not an admin", async () => {
+    mockAdminCheck(false);
+    const { updateTalentCommission } = await import("@/lib/supabase/admin-actions");
+    expect(await updateTalentCommission("talent-1", 500)).toEqual({ error: "Admin access required." });
+  });
+
+  it("rejects an out-of-range commission value", async () => {
+    mockAdminCheck(true);
+    const { updateTalentCommission } = await import("@/lib/supabase/admin-actions");
+    expect(await updateTalentCommission("talent-1", 10001)).toEqual({ error: "Commission must be between 0 and 10000 basis points." });
+  });
+
+  it("updates the talent's commission_bps when authorized and valid", async () => {
+    mockAdminCheck(true);
+    const updates: Record<string, unknown>[] = [];
+    mock.module("@/lib/supabase/service", () => ({
+      createServiceClient: () => ({
+        from: () => ({
+          update: (row: Record<string, unknown>) => ({
+            eq: async () => {
+              updates.push(row);
+              return { error: null };
+            },
+          }),
+        }),
+      }),
+    }));
+    const { updateTalentCommission } = await import("@/lib/supabase/admin-actions");
+
+    const result = await updateTalentCommission("talent-1", 500);
+
+    expect(result).toEqual({ success: true });
+    expect(updates).toEqual([{ commission_bps: 500 }]);
+  });
+});
