@@ -17,7 +17,10 @@ export async function exportWalletPrivateKeyCore(
   // Re-authenticate: confirms this request is really the account
   // holder, not just someone with an unattended open session.
   const { error: reauthError } = await authClient.auth.signInWithPassword({ email: user.email, password });
-  if (reauthError) return { error: "Incorrect password." };
+  if (reauthError) {
+    console.error(`[exportWalletPrivateKey] re-authentication failed for user ${user.id}`);
+    return { error: "Incorrect password." };
+  }
 
   const { data: wallet, error: selectError } = await serviceClient
     .from("wallets")
@@ -37,6 +40,8 @@ export async function exportWalletPrivateKeyCore(
   if (updateError) {
     console.error(`[exportWalletPrivateKey] failed to record exported_at for wallet ${wallet.id}:`, updateError);
   }
+
+  console.info(`[exportWalletPrivateKey] key exported for user ${user.id}, wallet ${wallet.id}`);
 
   return { privateKey };
 }

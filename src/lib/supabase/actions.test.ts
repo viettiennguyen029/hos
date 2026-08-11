@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 
-const provisionWalletForUser = mock(async () => ({ address: "0xprovisioned" }));
+const provisionWalletForUser = mock(async (_client: unknown, _userId: string) => ({ address: "0xprovisioned" }));
 mock.module("@/lib/wallet/provision", () => ({ provisionWalletForUser }));
 mock.module("@/lib/supabase/service", () => ({ createServiceClient: () => ({}) }));
 

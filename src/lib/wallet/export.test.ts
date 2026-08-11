@@ -22,17 +22,24 @@ function makeServiceClient(options: {
   updateError?: string;
 }) {
   const updates: Record<string, unknown>[] = [];
+  const eqCalls: [string, unknown][] = [];
   const client = {
     from: () => ({
       select: () => ({
-        eq: () => ({
-          eq: () => ({
-            maybeSingle: async () => {
-              if (options.selectError) return { data: null, error: { message: options.selectError } };
-              return { data: options.wallet ?? null, error: null };
+        eq: (col: string, val: unknown) => {
+          eqCalls.push([col, val]);
+          return {
+            eq: (col2: string, val2: unknown) => {
+              eqCalls.push([col2, val2]);
+              return {
+                maybeSingle: async () => {
+                  if (options.selectError) return { data: null, error: { message: options.selectError } };
+                  return { data: options.wallet ?? null, error: null };
+                },
+              };
             },
-          }),
-        }),
+          };
+        },
       }),
       update: (row: Record<string, unknown>) => ({
         eq: async () => {
@@ -42,7 +49,7 @@ function makeServiceClient(options: {
       }),
     }),
   };
-  return { client: client as never, updates };
+  return { client: client as never, updates, eqCalls };
 }
 
 describe("exportWalletPrivateKeyCore", () => {
@@ -69,13 +76,14 @@ describe("exportWalletPrivateKeyCore", () => {
 
   it("returns the decrypted private key and records exported_at on success", async () => {
     const auth = makeAuthClient({ user: { id: "user-1", email: "a@b.com" } });
-    const { client: service, updates } = makeServiceClient({
+    const { client: service, updates, eqCalls } = makeServiceClient({
       wallet: { id: "wallet-1", encrypted_private_key: { ciphertext: "0xrawkey", iv: "iv", authTag: "tag", keyVersion: 1 } },
     });
     const result = await exportWalletPrivateKeyCore(auth, service, testKeyProvider, "password");
     expect(result).toEqual({ privateKey: "0xrawkey" });
     expect(updates).toHaveLength(1);
     expect(updates[0]).toHaveProperty("exported_at");
+    expect(eqCalls).toEqual([["user_id", "user-1"], ["chain", "avalanche"]]);
   });
 
   it("still returns the private key even if recording exported_at fails", async () => {

@@ -23,6 +23,7 @@ create unique index wallets_label_chain_key on public.wallets (label, chain) whe
 create index wallets_user_id_idx on public.wallets (user_id);
 
 alter table public.wallets enable row level security;
+revoke all on public.wallets from anon, authenticated;
 -- Deliberately no policies: this table is reachable only by the
 -- service-role Postgres role (which bypasses RLS in Supabase), never by
 -- anon or authenticated. See src/lib/supabase/service.ts.
