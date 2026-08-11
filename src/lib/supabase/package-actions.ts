@@ -244,7 +244,7 @@ export async function checkoutCart(
   const kycError = await assertKycVerified(supabase, user.id);
   if (kycError) return kycError;
 
-  const paymentMethod = String(formData.get("paymentMethod") ?? "Prepaid");
+  const paymentChannel = String(formData.get("paymentChannel") ?? "fiat") as "fiat" | "crypto";
   const itemIds = formData.getAll("itemIds").map(String);
   if (itemIds.length === 0) return { error: "Select at least one item to check out." };
 
@@ -272,7 +272,8 @@ export async function checkoutCart(
       booked_end_time: item.booked_end_time,
       city_id: item.city_id,
       address: item.address,
-      payment_method: paymentMethod,
+      payment_method: "Prepaid",
+      payment_channel: paymentChannel,
     }))
   );
   if (insertError) return { error: insertError.message };

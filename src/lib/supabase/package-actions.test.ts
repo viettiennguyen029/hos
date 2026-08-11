@@ -28,7 +28,7 @@ function makeSupabase(options: {
   packageTalentId?: string;
   busySlots?: { busy_date: string; start_time: string; end_time: string }[];
 }) {
-  const inserted: { packages?: Record<string, unknown>; cart_items?: Record<string, unknown> } = {};
+  const inserted: { packages?: Record<string, unknown>; cart_items?: Record<string, unknown>; package_bookings?: Record<string, unknown>[] } = {};
   const updated: { packages?: Record<string, unknown>; package_bookings?: Record<string, unknown> } = {};
 
   return {
@@ -66,10 +66,32 @@ function makeSupabase(options: {
       }
       if (table === "cart_items") {
         return {
+          select: () => ({
+            eq: (col: string, val: unknown) => ({
+              in: async (col2: string, vals: unknown[]) => ({
+                data: [
+                  {
+                    id: "cart-1",
+                    package_id: "pkg-1",
+                    organizer_id: options.user?.id,
+                    price_vnd: 5_000_000,
+                    booked_date: "2026-12-01",
+                    booked_time: "20:00",
+                    booked_end_time: "21:00",
+                    city_id: "city-1",
+                    address: "123 Main St",
+                  },
+                ],
+              }),
+            }),
+          }),
           insert: async (row: Record<string, unknown>) => {
             inserted.cart_items = row;
             return { error: null };
           },
+          delete: () => ({
+            in: async () => ({ error: null }),
+          }),
         };
       }
       if (table === "package_bookings") {
@@ -93,6 +115,13 @@ function makeSupabase(options: {
                   : null,
               }),
             }),
+          }),
+          insert: async (rows: Record<string, unknown>[]) => {
+            inserted.package_bookings = rows;
+            return { error: null };
+          },
+          delete: () => ({
+            in: async () => ({ error: null }),
           }),
           update: (row: Record<string, unknown>) => {
             updated.package_bookings = row;
@@ -146,6 +175,14 @@ function packageFormData(overrides: Record<string, string> = {}): FormData {
   formData.set("priceMin", "1000000");
   formData.set("priceMax", "2000000");
   formData.set("paymentMethod", "Prepaid");
+  for (const [key, value] of Object.entries(overrides)) formData.set(key, value);
+  return formData;
+}
+
+function checkoutFormData(overrides: Record<string, string> = {}): FormData {
+  const formData = new FormData();
+  formData.append("itemIds", "cart-1");
+  formData.set("paymentChannel", "fiat");
   for (const [key, value] of Object.entries(overrides)) formData.set(key, value);
   return formData;
 }
@@ -729,5 +766,18 @@ describe("addToCart", () => {
       cartFormData({ bookedDate: "2026-12-01", bookedTime: "10:00", bookedEndTime: "11:00" })
     );
     expect(result).toEqual({ success: true });
+  });
+});
+
+describe("checkoutCart", () => {
+  it("inserts package_bookings with payment_method: Prepaid and payment_channel from formData", async () => {
+    supabaseMock = makeSupabase({ user: { id: USER_ID } });
+    const result = await checkoutCart(checkoutFormData({ paymentChannel: "crypto" }));
+    expect(result).toEqual({ success: true });
+    expect(supabaseMock.__inserted.package_bookings).toBeDefined();
+    expect(supabaseMock.__inserted.package_bookings?.[0]).toMatchObject({
+      payment_method: "Prepaid",
+      payment_channel: "crypto",
+    });
   });
 });
