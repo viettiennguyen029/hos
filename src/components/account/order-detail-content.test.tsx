@@ -17,12 +17,14 @@ let cancelResult: { error: string } | { success: true } = { success: true as con
 let markPaidResult: { error: string } | { success: true } = { success: true as const };
 let talentMarkCompleteResult: { error: string } | { success: true } = { success: true as const };
 let organizerMarkCompleteResult: { error: string } | { success: true } = { success: true as const };
+let depositResult: { error: string } | { success: true } = { success: true as const };
 const confirmCalls: string[] = [];
 const counterCalls: { bookingId: string; offerVnd: string | null }[] = [];
 const cancelCalls: string[] = [];
 const markPaidCalls: string[] = [];
 const talentMarkCompleteCalls: string[] = [];
 const organizerMarkCompleteCalls: string[] = [];
+const depositCalls: string[] = [];
 mock.module("@/lib/supabase/package-actions", () => ({
   confirmBookingOffer: async (bookingId: string) => {
     confirmCalls.push(bookingId);
@@ -48,6 +50,10 @@ mock.module("@/lib/supabase/package-actions", () => ({
     organizerMarkCompleteCalls.push(bookingId);
     return organizerMarkCompleteResult;
   },
+  depositBookingEscrow: async (bookingId: string) => {
+    depositCalls.push(bookingId);
+    return depositResult;
+  },
 }));
 
 import { OrderDetailContent } from "@/components/account/order-detail-content";
@@ -62,12 +68,14 @@ afterEach(() => {
   markPaidCalls.length = 0;
   talentMarkCompleteCalls.length = 0;
   organizerMarkCompleteCalls.length = 0;
+  depositCalls.length = 0;
   confirmResult = { success: true as const };
   counterResult = { success: true as const };
   cancelResult = { success: true as const };
   markPaidResult = { success: true as const };
   talentMarkCompleteResult = { success: true as const };
   organizerMarkCompleteResult = { success: true as const };
+  depositResult = { success: true as const };
   refresh.mockClear();
 });
 
@@ -89,6 +97,9 @@ function makeBooking(overrides: Partial<BookingDetail> = {}): BookingDetail {
     status: "pending",
     payment_status: "pending",
     talent_marked_complete_at: null,
+    payment_channel: null,
+    escrow_booking_id: null,
+    escrow_state: "none",
     created_at: "2026-08-01T00:00:00Z",
     updated_at: "2026-08-01T00:00:00Z",
     organizer_name: "Test Organizer",
@@ -196,6 +207,63 @@ describe("OrderDetailContent — payment step (confirmed, Prepaid, unpaid)", () 
     expect(markPaidCalls).toEqual(["booking-1"]);
     expect(toastCalls).toContainEqual({ type: "success", message: "Payment confirmed." });
     expect(refresh).toHaveBeenCalled();
+  });
+});
+
+describe("OrderDetailContent — crypto escrow deposit (confirmed, registered on-chain, not yet funded)", () => {
+  function registeredCryptoBooking(overrides: Partial<BookingDetail> = {}) {
+    return makeBooking({
+      status: "confirmed",
+      awaiting_response_from: null,
+      payment_method: "Prepaid",
+      payment_status: "pending",
+      payment_channel: "crypto",
+      escrow_state: "registered",
+      ...overrides,
+    });
+  }
+
+  it("shows Deposit (not Proceed to Payment) for the organizer, and hides isPaid-gated content", () => {
+    render(<OrderDetailContent role="organizer" booking={registeredCryptoBooking()} />);
+    expect(screen.getByRole("button", { name: /^deposit$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /proceed to payment/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add to calendar/i })).not.toBeInTheDocument();
+  });
+
+  it("does not show Deposit for the talent", () => {
+    render(<OrderDetailContent role="talent" booking={registeredCryptoBooking()} />);
+    expect(screen.queryByRole("button", { name: /^deposit$/i })).not.toBeInTheDocument();
+  });
+
+  it("clicking Deposit calls depositBookingEscrow and refreshes on success", async () => {
+    render(<OrderDetailContent role="organizer" booking={registeredCryptoBooking()} />);
+    fireEvent.click(screen.getByRole("button", { name: /^deposit$/i }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(depositCalls).toEqual(["booking-1"]);
+    expect(toastCalls).toContainEqual({ type: "success", message: "Deposit submitted." });
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("shows isPaid-gated content (Add to Calendar) once the escrow is funded, same as a fiat-paid booking", () => {
+    render(
+      <OrderDetailContent
+        role="organizer"
+        booking={registeredCryptoBooking({ escrow_state: "funded" })}
+      />
+    );
+    expect(screen.queryByRole("button", { name: /^deposit$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add to calendar/i })).toBeInTheDocument();
+  });
+
+  it("shows isPaid-gated content (Add to Calendar) once the escrow is released, same as a fiat-paid booking", () => {
+    render(
+      <OrderDetailContent
+        role="organizer"
+        booking={registeredCryptoBooking({ escrow_state: "released" })}
+      />
+    );
+    expect(screen.queryByRole("button", { name: /^deposit$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add to calendar/i })).toBeInTheDocument();
   });
 });
 

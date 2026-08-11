@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import {
   confirmBookingOffer,
+  depositBookingEscrow,
   markBookingPaid,
   organizerMarkComplete,
   rejectBooking,
@@ -47,8 +48,11 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
   const isMyTurn = booking.awaiting_response_from === myRole;
   const isNegotiating = NEGOTIATION_STATUSES.has(booking.status);
   const isConfirmed = booking.status === "confirmed" || booking.status === "completed";
-  const needsPayment = isConfirmed && booking.payment_method === "Prepaid" && booking.payment_status === "pending";
-  const isPaid = isConfirmed && !needsPayment;
+  const needsPayment =
+    isConfirmed && booking.payment_method === "Prepaid" && booking.payment_status === "pending" && booking.payment_channel !== "crypto";
+  const needsCryptoDeposit =
+    isConfirmed && booking.payment_channel === "crypto" && booking.escrow_state === "registered";
+  const isPaid = isConfirmed && !needsPayment && !needsCryptoDeposit;
   const isFullyCompleted = booking.status === "completed";
   const canMarkComplete =
     booking.status === "confirmed" && hasEndTimePassed(booking.booked_date, booking.booked_end_time);
@@ -90,6 +94,13 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
   async function handleOrganizerMarkComplete() {
     setPending(true);
     const result = await runAction(organizerMarkComplete(booking.id), { success: "Booking completed." });
+    setPending(false);
+    if (!("error" in result)) router.refresh();
+  }
+
+  async function handleDeposit() {
+    setPending(true);
+    const result = await runAction(depositBookingEscrow(booking.id), { success: "Deposit submitted." });
     setPending(false);
     if (!("error" in result)) router.refresh();
   }
@@ -217,6 +228,12 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
               Cancel
             </Button>
           </div>
+        )}
+
+        {needsCryptoDeposit && myRole === "organizer" && (
+          <Button disabled={pending} onClick={handleDeposit} className="h-11 w-full rounded-[6px]">
+            {pending ? "Depositing..." : "Deposit"}
+          </Button>
         )}
 
         {isPaid && (

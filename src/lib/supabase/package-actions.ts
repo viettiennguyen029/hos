@@ -6,7 +6,7 @@ import { assertKycVerified } from "@/lib/supabase/kyc";
 import { hasEndTimePassed } from "@/lib/booking-time";
 import { timeRangesOverlap } from "@/lib/time-overlap";
 import type { PaymentMethod } from "@/lib/supabase/types";
-import { registerEscrowBooking } from "@/lib/chain/escrow";
+import { depositEscrow, registerEscrowBooking } from "@/lib/chain/escrow";
 import { bookingIdToBytes32, getSettlementTokenAddress, vndToTokenAmount } from "@/lib/chain/escrow-config";
 import { provisionWalletForUser } from "@/lib/wallet/provision";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -420,6 +420,38 @@ export async function markBookingPaid(bookingId: string): Promise<{ error: strin
     .update({ payment_status: "complete" })
     .eq("id", bookingId);
   if (error) return { error: error.message };
+  return { success: true };
+}
+
+/** Organizer deposits a crypto-channel booking's escrow -- relayed, gas-sponsored. */
+export async function depositBookingEscrow(bookingId: string): Promise<{ error: string } | { success: true }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+
+  const { data: booking } = await supabase
+    .from("package_bookings")
+    .select("organizer_id, escrow_booking_id, escrow_state, price_vnd")
+    .eq("id", bookingId)
+    .single();
+  if (!booking) return { error: "Booking not found." };
+  if (booking.organizer_id !== user.id) return { error: "Only the organizer can deposit for this booking." };
+  if (booking.escrow_state !== "registered") return { error: "This booking isn't ready for deposit." };
+
+  const service = createServiceClient();
+  try {
+    await depositEscrow(service, user.id, {
+      bookingId: booking.escrow_booking_id as `0x${string}`,
+      tokenAddress: getSettlementTokenAddress(),
+      organizerAddress: (await provisionWalletForUser(service, user.id)).address as `0x${string}`,
+      amount: vndToTokenAmount(booking.price_vnd),
+    });
+  } catch (depositError) {
+    return { error: depositError instanceof Error ? depositError.message : "Deposit failed." };
+  }
+
   return { success: true };
 }
 

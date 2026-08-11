@@ -5,7 +5,11 @@ const revalidatePath = mock(() => {});
 mock.module("next/cache", () => ({ revalidatePath }));
 
 const registerEscrowBooking = mock(async (_supabase: unknown, _params: unknown) => "0xtxhash" as const);
-mock.module("@/lib/chain/escrow", () => ({ registerEscrowBooking }));
+const depositEscrow = mock(async (_supabase: unknown, _userId: string, _params: unknown) => ({
+  approveTxHash: null,
+  depositTxHash: "0xdeposittxhash" as const,
+}));
+mock.module("@/lib/chain/escrow", () => ({ registerEscrowBooking, depositEscrow }));
 
 const provisionWalletForUser = mock(async (_client: unknown, userId: string) => ({ address: `0xwallet-${userId}` }));
 mock.module("@/lib/wallet/provision", () => ({ provisionWalletForUser }));
@@ -44,6 +48,9 @@ interface FakeBooking {
   payment_status?: "pending" | "complete";
   booked_date?: string | null;
   booked_end_time?: string | null;
+  price_vnd?: number;
+  escrow_booking_id?: string | null;
+  escrow_state?: string;
 }
 
 function makeSupabase(options: {
@@ -136,6 +143,9 @@ function makeSupabase(options: {
                       payment_status: options.booking.payment_status ?? "pending",
                       booked_date: options.booking.booked_date ?? "2020-01-01",
                       booked_end_time: options.booking.booked_end_time ?? "00:00:00",
+                      price_vnd: options.booking.price_vnd ?? options.booking.talent_offer_vnd,
+                      escrow_booking_id: options.booking.escrow_booking_id ?? null,
+                      escrow_state: options.booking.escrow_state ?? "none",
                       package: { talent_id: options.booking.talent_id },
                     }
                   : null,
@@ -174,6 +184,7 @@ import {
   confirmBookingOffer,
   createPackage,
   deletePackage,
+  depositBookingEscrow,
   markBookingPaid,
   organizerMarkComplete,
   rejectBooking,
@@ -186,6 +197,7 @@ import {
 afterEach(() => {
   revalidatePath.mockClear();
   registerEscrowBooking.mockClear();
+  depositEscrow.mockClear();
   provisionWalletForUser.mockClear();
   serviceCommissionBps = 1200;
   delete process.env.SETTLEMENT_TOKEN_ADDRESS;
@@ -556,6 +568,78 @@ describe("markBookingPaid", () => {
       error: "This booking uses crypto escrow — use the Deposit action instead.",
     });
     expect(supabaseMock.__updated.package_bookings).toBeUndefined();
+  });
+});
+
+describe("depositBookingEscrow", () => {
+  it("rejects when not signed in", async () => {
+    supabaseMock = makeSupabase({ user: null });
+    expect(await depositBookingEscrow("booking-1")).toEqual({ error: "You must be signed in." });
+  });
+
+  it("rejects when the caller isn't the booking's organizer", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: TALENT_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        escrow_state: "registered",
+        escrow_booking_id: "0xescrowbooking",
+      },
+    });
+    expect(await depositBookingEscrow("booking-1")).toEqual({
+      error: "Only the organizer can deposit for this booking.",
+    });
+  });
+
+  it("rejects when escrow_state isn't 'registered' -- nothing to deposit against yet", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        escrow_state: "none",
+        escrow_booking_id: null,
+      },
+    });
+    expect(await depositBookingEscrow("booking-1")).toEqual({
+      error: "This booking isn't ready for deposit.",
+    });
+  });
+
+  it("calls depositEscrow with the booking's escrow id, token address, organizer's wallet, and the token amount, on success", async () => {
+    process.env.SETTLEMENT_TOKEN_ADDRESS = TOKEN_ADDRESS;
+    process.env.VND_PER_USDT = "25000";
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        price_vnd: 5_000_000,
+        escrow_state: "registered",
+        escrow_booking_id: "0xescrowbooking",
+      },
+    });
+    const result = await depositBookingEscrow(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+
+    expect(depositEscrow).toHaveBeenCalledTimes(1);
+    expect(depositEscrow.mock.calls[0]?.[1]).toBe(ORGANIZER_ID);
+    expect(depositEscrow.mock.calls[0]?.[2]).toEqual({
+      bookingId: "0xescrowbooking",
+      tokenAddress: getSettlementTokenAddress(),
+      organizerAddress: `0xwallet-${ORGANIZER_ID}`,
+      amount: vndToTokenAmount(5_000_000),
+    });
   });
 });
 
