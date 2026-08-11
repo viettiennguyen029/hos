@@ -5,6 +5,10 @@
     {
       "path": "/api/cron/check-relayer-balance",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/poll-escrow-events",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
