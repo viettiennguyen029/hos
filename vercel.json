@@ -1,4 +1,10 @@
 {
   "installCommand": "bun install --frozen-lockfile",
-  "buildCommand": "bun run build"
+  "buildCommand": "bun run build",
+  "crons": [
+    {
+      "path": "/api/cron/check-relayer-balance",
+      "schedule": "0 * * * *"
+    }
+  ]
 }
