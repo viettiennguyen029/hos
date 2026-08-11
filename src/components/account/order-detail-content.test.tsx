@@ -267,6 +267,32 @@ describe("OrderDetailContent — crypto escrow deposit (confirmed, registered on
   });
 });
 
+describe("OrderDetailContent — unfunded/refunded crypto bookings are never treated as paid", () => {
+  function cryptoBooking(overrides: Partial<BookingDetail> = {}) {
+    return makeBooking({
+      status: "confirmed",
+      awaiting_response_from: null,
+      payment_method: "Prepaid",
+      payment_status: "pending",
+      payment_channel: "crypto",
+      ...overrides,
+    });
+  }
+
+  it("hides isPaid-gated content for a confirmed crypto booking that hasn't been registered on-chain yet (escrow_state: none)", () => {
+    render(<OrderDetailContent role="organizer" booking={cryptoBooking({ escrow_state: "none" })} />);
+    expect(screen.queryByRole("button", { name: /add to calendar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /mark as completed/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^deposit$/i })).not.toBeInTheDocument();
+  });
+
+  it("hides isPaid-gated content for a refunded crypto booking", () => {
+    render(<OrderDetailContent role="organizer" booking={cryptoBooking({ escrow_state: "refunded" })} />);
+    expect(screen.queryByRole("button", { name: /add to calendar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /mark as completed/i })).not.toBeInTheDocument();
+  });
+});
+
 describe("OrderDetailContent — paid/complete state", () => {
   function paidBooking(overrides: Partial<BookingDetail> = {}) {
     return makeBooking({

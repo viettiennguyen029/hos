@@ -368,13 +368,23 @@ export async function confirmBookingOffer(
     // block the confirmation itself.
     try {
       const service = createServiceClient();
+      const escrowBookingId = bookingIdToBytes32(bookingId);
+      // Persist before the on-chain call so the indexer can already resolve
+      // the BookingRegistered event it's about to see, even if its next poll
+      // lands in the gap between the tx confirming and this function returning.
+      const { error: escrowIdError } = await service
+        .from("package_bookings")
+        .update({ escrow_booking_id: escrowBookingId })
+        .eq("id", bookingId);
+      if (escrowIdError) throw escrowIdError;
+
       const [{ address: organizerAddress }, { address: talentAddress }, { data: talentProfile }] = await Promise.all([
         provisionWalletForUser(service, actor.organizerId),
         provisionWalletForUser(service, actor.talentId),
         service.from("profiles").select("commission_bps").eq("id", actor.talentId).single(),
       ]);
       await registerEscrowBooking(service, {
-        bookingId: bookingIdToBytes32(bookingId),
+        bookingId: escrowBookingId,
         organizerAddress: organizerAddress as `0x${string}`,
         talentAddress: talentAddress as `0x${string}`,
         tokenAddress: getSettlementTokenAddress(),

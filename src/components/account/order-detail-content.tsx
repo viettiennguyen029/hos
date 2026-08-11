@@ -52,7 +52,11 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
     isConfirmed && booking.payment_method === "Prepaid" && booking.payment_status === "pending" && booking.payment_channel !== "crypto";
   const needsCryptoDeposit =
     isConfirmed && booking.payment_channel === "crypto" && booking.escrow_state === "registered";
-  const isPaid = isConfirmed && !needsPayment && !needsCryptoDeposit;
+  const isPaid =
+    isConfirmed &&
+    (booking.payment_channel === "crypto"
+      ? booking.escrow_state === "funded" || booking.escrow_state === "released"
+      : !needsPayment);
   const isFullyCompleted = booking.status === "completed";
   const canMarkComplete =
     booking.status === "confirmed" && hasEndTimePassed(booking.booked_date, booking.booked_end_time);

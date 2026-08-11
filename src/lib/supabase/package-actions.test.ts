@@ -4,7 +4,12 @@ import { bookingIdToBytes32, getSettlementTokenAddress, vndToTokenAmount } from 
 const revalidatePath = mock(() => {});
 mock.module("next/cache", () => ({ revalidatePath }));
 
-const registerEscrowBooking = mock(async (_supabase: unknown, _params: unknown) => "0xtxhash" as const);
+const callOrder: string[] = [];
+
+const registerEscrowBooking = mock(async (_supabase: unknown, _params: unknown) => {
+  callOrder.push("register-escrow-booking");
+  return "0xtxhash" as const;
+});
 const depositEscrow = mock(async (_supabase: unknown, _userId: string, _params: unknown) => ({
   approveTxHash: null,
   depositTxHash: "0xdeposittxhash" as const,
@@ -16,16 +21,28 @@ const provisionWalletForUser = mock(async (_client: unknown, userId: string) => 
 mock.module("@/lib/wallet/provision", () => ({ provisionWalletForUser }));
 
 let serviceCommissionBps: number | null = 1200;
+let serviceUpdatedPackageBookings: Record<string, unknown> | undefined;
 const serviceClient = {
   from: (table: string) => {
-    if (table !== "profiles") throw new Error(`unexpected service table ${table}`);
-    return {
-      select: () => ({
-        eq: () => ({
-          single: async () => ({ data: { commission_bps: serviceCommissionBps } }),
+    if (table === "profiles") {
+      return {
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: { commission_bps: serviceCommissionBps } }),
+          }),
         }),
-      }),
-    };
+      };
+    }
+    if (table === "package_bookings") {
+      return {
+        update: (row: Record<string, unknown>) => {
+          serviceUpdatedPackageBookings = row;
+          callOrder.push("db-update-escrow-booking-id");
+          return { eq: async () => ({ error: null }) };
+        },
+      };
+    }
+    throw new Error(`unexpected service table ${table}`);
   },
 };
 mock.module("@/lib/supabase/service", () => ({ createServiceClient: () => serviceClient }));
@@ -202,6 +219,8 @@ afterEach(() => {
   releaseEscrowToTalent.mockClear();
   provisionWalletForUser.mockClear();
   serviceCommissionBps = 1200;
+  serviceUpdatedPackageBookings = undefined;
+  callOrder.length = 0;
   delete process.env.SETTLEMENT_TOKEN_ADDRESS;
   delete process.env.VND_PER_USDT;
 });
@@ -437,6 +456,27 @@ describe("confirmBookingOffer", () => {
       amount: vndToTokenAmount(4_500_000),
       feeBps: 1200,
     });
+  });
+
+  it("persists escrow_booking_id to package_bookings via the service client before registering on-chain", async () => {
+    process.env.SETTLEMENT_TOKEN_ADDRESS = TOKEN_ADDRESS;
+    process.env.VND_PER_USDT = "25000";
+    supabaseMock = makeSupabase({
+      user: { id: TALENT_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: "talent",
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 4_500_000,
+        payment_channel: "crypto",
+      },
+    });
+    const result = await confirmBookingOffer(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+
+    expect(serviceUpdatedPackageBookings).toEqual({ escrow_booking_id: bookingIdToBytes32(BOOKING_ID) });
+    expect(callOrder).toEqual(["db-update-escrow-booking-id", "register-escrow-booking"]);
   });
 
   it("does not register escrow on-chain for a fiat (or null payment_channel) booking", async () => {
