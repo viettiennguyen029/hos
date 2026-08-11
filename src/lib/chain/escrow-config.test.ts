@@ -49,7 +49,9 @@ describe("getSettlementTokenAddress", () => {
 describe("bookingIdToBytes32", () => {
   it("right-pads a UUID's 16 bytes into a bytes32 hex string", () => {
     const result = bookingIdToBytes32("11111111-2222-3333-4444-555555555555");
-    expect(result).toBe("0x1111111122223333444455555555555500000000000000000000000000000000".slice(0, 66));
+    expect(result).toBe(
+      "0x1111111122223333444455555555555500000000000000000000000000000000".slice(0, 66) as `0x${string}`
+    );
   });
 
   it("throws for a malformed UUID", () => {
