@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "bun test --isolate src happydom.test.ts happydom-matchers.test.ts"
+    "test": "bun test --isolate src happydom.test.ts happydom-matchers.test.ts",
+    "provision-wallets": "bun scripts/provision-platform-wallets.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
