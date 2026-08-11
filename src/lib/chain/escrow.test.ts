@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { registerEscrowBooking } from "@/lib/chain/escrow";
+import { relayAsUser } from "@/lib/chain/relayer";
 import type { KeyEncryptionProvider } from "@/lib/wallet/key-provider";
 
 const OPERATOR_PRIVATE_KEY = generatePrivateKey();
@@ -94,6 +95,77 @@ describe("registerEscrowBooking", () => {
       100_000000n,
       500,
     ]);
+
+    delete process.env.ESCROW_MANAGER_ADDRESS;
+  });
+});
+
+describe("depositEscrow", () => {
+  it("relays an approve then a deposit when allowance is insufficient", async () => {
+    process.env.ESCROW_MANAGER_ADDRESS = ESCROW_ADDRESS;
+    const relayCalls: { to: string; data: string }[] = [];
+    const relayAsUserFake = async (
+      _supabase: SupabaseClient,
+      _userId: string,
+      to: `0x${string}`,
+      data: `0x${string}`
+    ) => {
+      relayCalls.push({ to, data });
+      return `0xtx${relayCalls.length}` as `0x${string}`;
+    };
+
+    const publicClient = {
+      readContract: async () => 0n, // allowance
+    };
+
+    const { depositEscrow } = await import("@/lib/chain/escrow");
+    const result = await depositEscrow(
+      { from: () => ({}) } as never,
+      "user-1",
+      {
+        bookingId: "0x1111111122223333444455555555555500000000000000000000000000000000".slice(0, 66) as `0x${string}`,
+        tokenAddress: TOKEN_ADDRESS,
+        organizerAddress: ORGANIZER_ADDRESS,
+        amount: 100_000000n,
+      },
+      { relayAsUser: relayAsUserFake as never, publicClient: publicClient as never }
+    );
+
+    expect(relayCalls).toHaveLength(2);
+    expect(relayCalls[0]?.to).toBe(TOKEN_ADDRESS);
+    expect(relayCalls[1]?.to).toBe(ESCROW_ADDRESS);
+    expect(result.approveTxHash).toBe("0xtx1");
+    expect(result.depositTxHash).toBe("0xtx2");
+
+    delete process.env.ESCROW_MANAGER_ADDRESS;
+  });
+
+  it("skips the approve when allowance is already sufficient", async () => {
+    process.env.ESCROW_MANAGER_ADDRESS = ESCROW_ADDRESS;
+    const relayCalls: { to: string }[] = [];
+    const relayAsUserFake = async (_supabase: SupabaseClient, _userId: string, to: `0x${string}`) => {
+      relayCalls.push({ to });
+      return `0xtx${relayCalls.length}` as `0x${string}`;
+    };
+    const publicClient = { readContract: async () => 100_000000n };
+
+    const { depositEscrow } = await import("@/lib/chain/escrow");
+    const result = await depositEscrow(
+      {} as never,
+      "user-1",
+      {
+        bookingId: "0x1111111122223333444455555555555500000000000000000000000000000000".slice(0, 66) as `0x${string}`,
+        tokenAddress: TOKEN_ADDRESS,
+        organizerAddress: ORGANIZER_ADDRESS,
+        amount: 100_000000n,
+      },
+      { relayAsUser: relayAsUserFake as never, publicClient: publicClient as never }
+    );
+
+    expect(relayCalls).toHaveLength(1);
+    expect(relayCalls[0]?.to).toBe(ESCROW_ADDRESS);
+    expect(result.approveTxHash).toBeNull();
+    expect(result.depositTxHash).toBe("0xtx1");
 
     delete process.env.ESCROW_MANAGER_ADDRESS;
   });
