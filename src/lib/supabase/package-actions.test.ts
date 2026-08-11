@@ -9,7 +9,8 @@ const depositEscrow = mock(async (_supabase: unknown, _userId: string, _params: 
   approveTxHash: null,
   depositTxHash: "0xdeposittxhash" as const,
 }));
-mock.module("@/lib/chain/escrow", () => ({ registerEscrowBooking, depositEscrow }));
+const releaseEscrowToTalent = mock(async (_supabase: unknown, _userId: string, _bookingId: unknown) => "0xreleasetxhash" as const);
+mock.module("@/lib/chain/escrow", () => ({ registerEscrowBooking, depositEscrow, releaseEscrowToTalent }));
 
 const provisionWalletForUser = mock(async (_client: unknown, userId: string) => ({ address: `0xwallet-${userId}` }));
 mock.module("@/lib/wallet/provision", () => ({ provisionWalletForUser }));
@@ -198,6 +199,7 @@ afterEach(() => {
   revalidatePath.mockClear();
   registerEscrowBooking.mockClear();
   depositEscrow.mockClear();
+  releaseEscrowToTalent.mockClear();
   provisionWalletForUser.mockClear();
   serviceCommissionBps = 1200;
   delete process.env.SETTLEMENT_TOKEN_ADDRESS;
@@ -792,6 +794,98 @@ describe("organizerMarkComplete", () => {
     expect(await organizerMarkComplete("booking-1")).toEqual({
       error: "This booking can't be marked completed until its end time has passed.",
     });
+  });
+
+  it("calls releaseEscrowToTalent on a crypto booking with escrow_state: funded", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        status: "confirmed",
+        booked_date: "2020-01-01",
+        booked_end_time: "00:00:00",
+        payment_channel: "crypto",
+        escrow_state: "funded",
+        escrow_booking_id: "0xescrowid123",
+      },
+    });
+    const result = await organizerMarkComplete(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+    expect(releaseEscrowToTalent).toHaveBeenCalledTimes(1);
+    expect(releaseEscrowToTalent.mock.calls[0]?.[1]).toBe(ORGANIZER_ID);
+    expect(releaseEscrowToTalent.mock.calls[0]?.[2]).toBe("0xescrowid123");
+  });
+
+  it("does not call releaseEscrowToTalent on a fiat booking", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        status: "confirmed",
+        booked_date: "2020-01-01",
+        booked_end_time: "00:00:00",
+        payment_channel: "fiat",
+        escrow_state: "none",
+        escrow_booking_id: null,
+      },
+    });
+    const result = await organizerMarkComplete(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+    expect(releaseEscrowToTalent).not.toHaveBeenCalled();
+  });
+
+  it("does not call releaseEscrowToTalent on a crypto booking with escrow_state not funded", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        status: "confirmed",
+        booked_date: "2020-01-01",
+        booked_end_time: "00:00:00",
+        payment_channel: "crypto",
+        escrow_state: "registered",
+        escrow_booking_id: "0xescrowid123",
+      },
+    });
+    const result = await organizerMarkComplete(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+    expect(releaseEscrowToTalent).not.toHaveBeenCalled();
+  });
+
+  it("still returns success when releaseEscrowToTalent throws (best-effort)", async () => {
+    releaseEscrowToTalent.mockImplementationOnce(async () => {
+      throw new Error("boom");
+    });
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        status: "confirmed",
+        booked_date: "2020-01-01",
+        booked_end_time: "00:00:00",
+        payment_channel: "crypto",
+        escrow_state: "funded",
+        escrow_booking_id: "0xescrowid123",
+      },
+    });
+    const result = await organizerMarkComplete(BOOKING_ID);
+    expect(result).toEqual({ success: true });
   });
 });
 

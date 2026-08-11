@@ -6,7 +6,7 @@ import { assertKycVerified } from "@/lib/supabase/kyc";
 import { hasEndTimePassed } from "@/lib/booking-time";
 import { timeRangesOverlap } from "@/lib/time-overlap";
 import type { PaymentMethod } from "@/lib/supabase/types";
-import { depositEscrow, registerEscrowBooking } from "@/lib/chain/escrow";
+import { depositEscrow, registerEscrowBooking, releaseEscrowToTalent } from "@/lib/chain/escrow";
 import { bookingIdToBytes32, getSettlementTokenAddress, vndToTokenAmount } from "@/lib/chain/escrow-config";
 import { provisionWalletForUser } from "@/lib/wallet/provision";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -498,7 +498,7 @@ export async function organizerMarkComplete(bookingId: string): Promise<{ error:
 
   const { data: booking } = await supabase
     .from("package_bookings")
-    .select("organizer_id, status, booked_date, booked_end_time")
+    .select("organizer_id, status, booked_date, booked_end_time, payment_channel, escrow_state, escrow_booking_id")
     .eq("id", bookingId)
     .single();
   if (!booking) return { error: "Booking not found." };
@@ -510,6 +510,15 @@ export async function organizerMarkComplete(bookingId: string): Promise<{ error:
 
   const { error } = await supabase.from("package_bookings").update({ status: "completed" }).eq("id", bookingId);
   if (error) return { error: error.message };
+
+  if (booking.payment_channel === "crypto" && booking.escrow_state === "funded") {
+    try {
+      await releaseEscrowToTalent(createServiceClient(), user.id, booking.escrow_booking_id as `0x${string}`);
+    } catch (releaseError) {
+      console.error(`[organizerMarkComplete] escrow release failed for booking ${bookingId}:`, releaseError);
+    }
+  }
+
   return { success: true };
 }
 
