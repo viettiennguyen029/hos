@@ -28,10 +28,16 @@ export function resolveDeployConfig(env: NodeJS.ProcessEnv): DeployConfig {
 
 async function main() {
   const config = resolveDeployConfig(process.env);
+  // Avalanche's public C-Chain RPC nodes reject eth_estimateGas queries
+  // against the "pending" block tag, which hardhat-ethers issues by
+  // default whenever a transaction's gasLimit isn't already set
+  // ("state not available for pending block"). Passing an explicit
+  // gasLimit on every deploy call sidesteps that query entirely.
+  const DEPLOY_GAS_LIMIT = 8_000_000n;
   let forwarderAddress = config.forwarderAddress;
   if (!forwarderAddress) {
     const Forwarder = await ethers.getContractFactory("ERC2771Forwarder");
-    const forwarder = await Forwarder.deploy("HosEscrowForwarder");
+    const forwarder = await Forwarder.deploy("HosEscrowForwarder", { gasLimit: DEPLOY_GAS_LIMIT });
     await forwarder.waitForDeployment();
     forwarderAddress = await forwarder.getAddress();
     console.log("Deployed new ERC2771Forwarder to:", forwarderAddress);
@@ -47,6 +53,7 @@ async function main() {
       kind: "uups",
       constructorArgs: [forwarderAddress],
       unsafeAllow: ["constructor", "state-variable-immutable"],
+      txOverrides: { gasLimit: DEPLOY_GAS_LIMIT },
     }
   );
 
