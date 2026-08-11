@@ -465,6 +465,32 @@ export async function depositBookingEscrow(bookingId: string): Promise<{ error: 
   return { success: true };
 }
 
+/** The organizer's own view of who they're paying, before confirming an on-chain release. Never exposes anything but the public address. */
+export async function getTalentWalletForBooking(
+  bookingId: string
+): Promise<{ address: `0x${string}`; chain: string } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+
+  const actor = await actorRoleFor(supabase, bookingId, user.id);
+  if ("error" in actor) return actor;
+  if (actor.role !== "organizer") return { error: "Only the organizer can view this." };
+
+  const service = createServiceClient();
+  const { data: wallet, error } = await service
+    .from("wallets")
+    .select("address, chain")
+    .eq("user_id", actor.talentId)
+    .eq("chain", "avalanche")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  if (!wallet) return { error: "Talent has no wallet on file." };
+  return { address: wallet.address as `0x${string}`, chain: wallet.chain };
+}
+
 /** Talent flags that the event happened -- proof + a reminder notification, no status change. */
 export async function talentMarkComplete(bookingId: string): Promise<{ error: string } | { success: true }> {
   const supabase = await createClient();

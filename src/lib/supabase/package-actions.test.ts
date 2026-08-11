@@ -22,6 +22,9 @@ mock.module("@/lib/wallet/provision", () => ({ provisionWalletForUser }));
 
 let serviceCommissionBps: number | null = 1200;
 let serviceUpdatedPackageBookings: Record<string, unknown> | undefined;
+let serviceWalletRow: { address: string; chain: string } | null = { address: "0xtalentwallet", chain: "avalanche" };
+let serviceWalletError: { message: string } | null = null;
+const serviceWalletEqCalls: [string, unknown][] = [];
 const serviceClient = {
   from: (table: string) => {
     if (table === "profiles") {
@@ -40,6 +43,23 @@ const serviceClient = {
           callOrder.push("db-update-escrow-booking-id");
           return { eq: async () => ({ error: null }) };
         },
+      };
+    }
+    if (table === "wallets") {
+      return {
+        select: () => ({
+          eq: (col: string, val: unknown) => {
+            serviceWalletEqCalls.push([col, val]);
+            return {
+              eq: (col2: string, val2: unknown) => {
+                serviceWalletEqCalls.push([col2, val2]);
+                return {
+                  maybeSingle: async () => ({ data: serviceWalletRow, error: serviceWalletError }),
+                };
+              },
+            };
+          },
+        }),
       };
     }
     throw new Error(`unexpected service table ${table}`);
@@ -203,6 +223,7 @@ import {
   createPackage,
   deletePackage,
   depositBookingEscrow,
+  getTalentWalletForBooking,
   markBookingPaid,
   organizerMarkComplete,
   rejectBooking,
@@ -220,6 +241,9 @@ afterEach(() => {
   provisionWalletForUser.mockClear();
   serviceCommissionBps = 1200;
   serviceUpdatedPackageBookings = undefined;
+  serviceWalletRow = { address: "0xtalentwallet", chain: "avalanche" };
+  serviceWalletError = null;
+  serviceWalletEqCalls.length = 0;
   callOrder.length = 0;
   delete process.env.SETTLEMENT_TOKEN_ADDRESS;
   delete process.env.VND_PER_USDT;
@@ -682,6 +706,77 @@ describe("depositBookingEscrow", () => {
       organizerAddress: `0xwallet-${ORGANIZER_ID}`,
       amount: vndToTokenAmount(5_000_000),
     });
+  });
+});
+
+describe("getTalentWalletForBooking", () => {
+  it("rejects when not signed in", async () => {
+    supabaseMock = makeSupabase({ user: null });
+    expect(await getTalentWalletForBooking("booking-1")).toEqual({ error: "You must be signed in." });
+  });
+
+  it("rejects when the caller is the booking's talent, not the organizer", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: TALENT_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+      },
+    });
+    expect(await getTalentWalletForBooking("booking-1")).toEqual({ error: "Only the organizer can view this." });
+  });
+
+  it("rejects when the caller is an unrelated user, not part of the booking", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: "44444444-4444-4444-4444-444444444444" },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+      },
+    });
+    expect(await getTalentWalletForBooking("booking-1")).toEqual({ error: "You are not part of this booking." });
+  });
+
+  it("returns the talent's wallet address/chain from the service-role wallets query, scoped by the booking's talent id", async () => {
+    serviceWalletRow = { address: "0xtalentaddress123", chain: "avalanche" };
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+      },
+    });
+    const result = await getTalentWalletForBooking("booking-1");
+    expect(result).toEqual({ address: "0xtalentaddress123", chain: "avalanche" });
+    expect(serviceWalletEqCalls).toEqual([
+      ["user_id", TALENT_ID],
+      ["chain", "avalanche"],
+    ]);
+  });
+
+  it("returns an error (not a thrown exception) when the talent has no wallet on file", async () => {
+    serviceWalletRow = null;
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+      },
+    });
+    const result = await getTalentWalletForBooking("booking-1");
+    expect(result).toEqual({ error: "Talent has no wallet on file." });
   });
 });
 

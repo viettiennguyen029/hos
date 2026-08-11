@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, mock } from "bun:test";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 
 const toastCalls: { type: "error" | "success"; message: string }[] = [];
 mock.module("sonner", () => ({
@@ -18,6 +18,10 @@ let markPaidResult: { error: string } | { success: true } = { success: true as c
 let talentMarkCompleteResult: { error: string } | { success: true } = { success: true as const };
 let organizerMarkCompleteResult: { error: string } | { success: true } = { success: true as const };
 let depositResult: { error: string } | { success: true } = { success: true as const };
+let walletResult: { address: `0x${string}`; chain: string } | { error: string } = {
+  address: "0xtalentwalletaddress",
+  chain: "avalanche",
+};
 const confirmCalls: string[] = [];
 const counterCalls: { bookingId: string; offerVnd: string | null }[] = [];
 const cancelCalls: string[] = [];
@@ -25,6 +29,7 @@ const markPaidCalls: string[] = [];
 const talentMarkCompleteCalls: string[] = [];
 const organizerMarkCompleteCalls: string[] = [];
 const depositCalls: string[] = [];
+const walletCalls: string[] = [];
 mock.module("@/lib/supabase/package-actions", () => ({
   confirmBookingOffer: async (bookingId: string) => {
     confirmCalls.push(bookingId);
@@ -54,6 +59,10 @@ mock.module("@/lib/supabase/package-actions", () => ({
     depositCalls.push(bookingId);
     return depositResult;
   },
+  getTalentWalletForBooking: async (bookingId: string) => {
+    walletCalls.push(bookingId);
+    return walletResult;
+  },
 }));
 
 import { OrderDetailContent } from "@/components/account/order-detail-content";
@@ -69,6 +78,7 @@ afterEach(() => {
   talentMarkCompleteCalls.length = 0;
   organizerMarkCompleteCalls.length = 0;
   depositCalls.length = 0;
+  walletCalls.length = 0;
   confirmResult = { success: true as const };
   counterResult = { success: true as const };
   cancelResult = { success: true as const };
@@ -76,6 +86,7 @@ afterEach(() => {
   talentMarkCompleteResult = { success: true as const };
   organizerMarkCompleteResult = { success: true as const };
   depositResult = { success: true as const };
+  walletResult = { address: "0xtalentwalletaddress", chain: "avalanche" };
   refresh.mockClear();
 });
 
@@ -390,6 +401,87 @@ describe("OrderDetailContent — paid/complete state", () => {
     expect(screen.queryByRole("button", { name: /mark as completed/i })).not.toBeInTheDocument();
     expect(screen.getByText(/this booking is complete/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add to calendar/i })).toBeInTheDocument();
+  });
+});
+
+describe("OrderDetailContent — crypto escrow release confirmation dialog", () => {
+  function fundedCryptoBookingPastEndTime(overrides: Partial<BookingDetail> = {}) {
+    return makeBooking({
+      status: "confirmed",
+      awaiting_response_from: null,
+      payment_method: "Prepaid",
+      payment_status: "complete",
+      payment_channel: "crypto",
+      escrow_state: "funded",
+      booked_date: "2020-01-01",
+      booked_time: "20:00",
+      booked_end_time: "21:00",
+      ...overrides,
+    });
+  }
+
+  it("shows Release Payment (not Mark as Completed) for the organizer on a funded crypto booking", () => {
+    render(<OrderDetailContent role="organizer" booking={fundedCryptoBookingPastEndTime()} />);
+    expect(screen.getByRole("button", { name: /release payment/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^mark as completed$/i })).not.toBeInTheDocument();
+  });
+
+  it("clicking Release Payment opens the dialog, fetches, and displays the talent's wallet address, chain, and name", async () => {
+    walletResult = { address: "0xabc123talentwallet", chain: "avalanche" };
+    render(<OrderDetailContent role="organizer" booking={fundedCryptoBookingPastEndTime()} />);
+    fireEvent.click(screen.getByRole("button", { name: /release payment/i }));
+    expect(walletCalls).toEqual(["booking-1"]);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("0xabc123talentwallet")).toBeInTheDocument();
+    expect(within(dialog).getByText("Avalanche")).toBeInTheDocument();
+    expect(within(dialog).getByText("Test Talent")).toBeInTheDocument();
+  });
+
+  it("disables Release to Talent until the wallet address has loaded, then enables it", async () => {
+    render(<OrderDetailContent role="organizer" booking={fundedCryptoBookingPastEndTime()} />);
+    fireEvent.click(screen.getByRole("button", { name: /release payment/i }));
+    expect(screen.getByRole("button", { name: /release to talent/i })).toBeDisabled();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.getByRole("button", { name: /release to talent/i })).toBeEnabled();
+  });
+
+  it("clicking Release to Talent calls organizerMarkComplete with the booking id and refreshes", async () => {
+    render(<OrderDetailContent role="organizer" booking={fundedCryptoBookingPastEndTime()} />);
+    fireEvent.click(screen.getByRole("button", { name: /release payment/i }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fireEvent.click(screen.getByRole("button", { name: /release to talent/i }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(organizerMarkCompleteCalls).toEqual(["booking-1"]);
+    expect(toastCalls).toContainEqual({ type: "success", message: "Booking completed." });
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("for a fiat booking, still shows plain Mark as Completed with direct-click behavior, no dialog, and never calls getTalentWalletForBooking", async () => {
+    const fiatBooking = makeBooking({
+      status: "confirmed",
+      awaiting_response_from: null,
+      payment_method: "Prepaid",
+      payment_status: "complete",
+      booked_date: "2020-01-01",
+      booked_time: "20:00",
+      booked_end_time: "21:00",
+    });
+    render(<OrderDetailContent role="organizer" booking={fiatBooking} />);
+    expect(screen.queryByRole("button", { name: /release payment/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /mark as completed/i }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(organizerMarkCompleteCalls).toEqual(["booking-1"]);
+    expect(walletCalls).toEqual([]);
+    expect(screen.queryByText("Release Payment")).not.toBeInTheDocument();
+  });
+
+  it("for a crypto booking with escrow_state: released (nothing left to release), still shows plain Mark as Completed with no dialog", () => {
+    const releasedCryptoBooking = fundedCryptoBookingPastEndTime({ escrow_state: "released" });
+    render(<OrderDetailContent role="organizer" booking={releasedCryptoBooking} />);
+    expect(screen.queryByRole("button", { name: /release payment/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /mark as completed/i })).toBeInTheDocument();
+    expect(walletCalls).toEqual([]);
   });
 });
 

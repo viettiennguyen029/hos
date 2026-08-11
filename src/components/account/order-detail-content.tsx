@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import {
   confirmBookingOffer,
   depositBookingEscrow,
+  getTalentWalletForBooking,
   markBookingPaid,
   organizerMarkComplete,
   rejectBooking,
@@ -44,6 +45,7 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
   const [counterOpen, setCounterOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [checkInOpen, setCheckInOpen] = useState(false);
+  const [releaseOpen, setReleaseOpen] = useState(false);
 
   const isMyTurn = booking.awaiting_response_from === myRole;
   const isNegotiating = NEGOTIATION_STATUSES.has(booking.status);
@@ -99,7 +101,10 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
     setPending(true);
     const result = await runAction(organizerMarkComplete(booking.id), { success: "Booking completed." });
     setPending(false);
-    if (!("error" in result)) router.refresh();
+    if (!("error" in result)) {
+      setReleaseOpen(false);
+      router.refresh();
+    }
   }
 
   async function handleDeposit() {
@@ -252,13 +257,23 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
             </Button>
 
             {!isFullyCompleted && myRole === "organizer" && (
-              <Button
-                className="h-11 w-full rounded-[6px]"
-                disabled={!canMarkComplete || pending}
-                onClick={handleOrganizerMarkComplete}
-              >
-                Mark as Completed
-              </Button>
+              booking.payment_channel === "crypto" && booking.escrow_state === "funded" ? (
+                <Button
+                  className="h-11 w-full rounded-[6px]"
+                  disabled={!canMarkComplete || pending}
+                  onClick={() => setReleaseOpen(true)}
+                >
+                  Release Payment
+                </Button>
+              ) : (
+                <Button
+                  className="h-11 w-full rounded-[6px]"
+                  disabled={!canMarkComplete || pending}
+                  onClick={handleOrganizerMarkComplete}
+                >
+                  Mark as Completed
+                </Button>
+              )
             )}
             {!isFullyCompleted && myRole === "organizer" && booking.talent_marked_complete_at && (
               <p className="text-center text-xs text-muted-foreground">
@@ -389,6 +404,16 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
       )}
 
       {checkInOpen && <CheckInQrDialog bookingId={booking.id} onOpenChange={setCheckInOpen} />}
+
+      {releaseOpen && (
+        <ReleaseDialog
+          bookingId={booking.id}
+          talentName={booking.talent_name}
+          pending={pending}
+          onOpenChange={setReleaseOpen}
+          onConfirmRelease={handleOrganizerMarkComplete}
+        />
+      )}
     </div>
   );
 }
@@ -445,6 +470,68 @@ function PaymentDialog({
         <p className="text-center text-xs text-muted-foreground">
           *After completing the booking, we will send you a notification
         </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReleaseDialog({
+  bookingId,
+  talentName,
+  pending,
+  onOpenChange,
+  onConfirmRelease,
+}: {
+  bookingId: string;
+  talentName: string;
+  pending: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirmRelease: () => void;
+}) {
+  const [wallet, setWallet] = useState<{ address: string; chain: string } | null>(null);
+  const [walletError, setWalletError] = useState<string | undefined>();
+
+  useEffect(() => {
+    let cancelled = false;
+    getTalentWalletForBooking(bookingId).then((result) => {
+      if (cancelled) return;
+      if ("error" in result) setWalletError(result.error);
+      else setWallet(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [bookingId]);
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[420px]">
+        <DialogHeader>
+          <DialogTitle>Release Payment</DialogTitle>
+          <DialogDescription>
+            Confirm you want to release the escrowed funds to the talent below. This cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-2 text-sm">
+          <div className="flex items-center justify-between rounded-[8px] bg-white/5 p-3">
+            <span className="text-muted-foreground">Talent</span>
+            <span className="font-semibold text-foreground">{talentName}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-[8px] bg-white/5 p-3">
+            <span className="text-muted-foreground">Chain</span>
+            <span className="font-semibold text-foreground">Avalanche</span>
+          </div>
+          <div className="flex items-center justify-between rounded-[8px] bg-white/5 p-3">
+            <span className="text-muted-foreground">Wallet address</span>
+            <span className="break-all font-semibold text-foreground">
+              {wallet?.address ?? (walletError ? "Unavailable" : "Loading...")}
+            </span>
+          </div>
+        </div>
+        {walletError && <p className="text-center text-xs text-destructive">{walletError}</p>}
+        <Button onClick={onConfirmRelease} disabled={pending || !wallet} className={cn("h-11 w-full rounded-[6px]")}>
+          {pending ? "Releasing..." : "Release to Talent"}
+        </Button>
       </DialogContent>
     </Dialog>
   );
