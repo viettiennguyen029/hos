@@ -6,6 +6,10 @@ import { assertKycVerified } from "@/lib/supabase/kyc";
 import { hasEndTimePassed } from "@/lib/booking-time";
 import { timeRangesOverlap } from "@/lib/time-overlap";
 import type { PaymentMethod } from "@/lib/supabase/types";
+import { registerEscrowBooking } from "@/lib/chain/escrow";
+import { bookingIdToBytes32, getSettlementTokenAddress, vndToTokenAmount } from "@/lib/chain/escrow-config";
+import { provisionWalletForUser } from "@/lib/wallet/provision";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function createPackage(
   formData: FormData
@@ -299,12 +303,15 @@ async function actorRoleFor(
       talentOfferVnd: number;
       organizerOfferVnd: number;
       paymentMethod: PaymentMethod;
+      organizerId: string;
+      talentId: string;
+      paymentChannel: "fiat" | "crypto" | null;
     }
 > {
   const { data: booking } = await supabase
     .from("package_bookings")
     .select(
-      "organizer_id, awaiting_response_from, talent_offer_vnd, organizer_offer_vnd, payment_method, package:packages(talent_id)"
+      "organizer_id, awaiting_response_from, talent_offer_vnd, organizer_offer_vnd, payment_method, payment_channel, package:packages(talent_id)"
     )
     .eq("id", bookingId)
     .single();
@@ -320,6 +327,9 @@ async function actorRoleFor(
     talentOfferVnd: booking.talent_offer_vnd,
     organizerOfferVnd: booking.organizer_offer_vnd,
     paymentMethod: booking.payment_method,
+    organizerId: booking.organizer_id,
+    talentId: packageTalentId as string,
+    paymentChannel: booking.payment_channel,
   };
 }
 
@@ -350,6 +360,32 @@ export async function confirmBookingOffer(
     .update({ status: "confirmed", price_vnd: agreedPrice, awaiting_response_from: null, payment_status: paymentStatus })
     .eq("id", bookingId);
   if (error) return { error: error.message };
+
+  if (actor.paymentChannel === "crypto") {
+    // Best-effort, matching the signup wallet-provisioning pattern: the
+    // booking is already confirmed at this point, and this can be
+    // retried/resolved manually if it fails, so a failure here shouldn't
+    // block the confirmation itself.
+    try {
+      const service = createServiceClient();
+      const [{ address: organizerAddress }, { address: talentAddress }, { data: talentProfile }] = await Promise.all([
+        provisionWalletForUser(service, actor.organizerId),
+        provisionWalletForUser(service, actor.talentId),
+        service.from("profiles").select("commission_bps").eq("id", actor.talentId).single(),
+      ]);
+      await registerEscrowBooking(service, {
+        bookingId: bookingIdToBytes32(bookingId),
+        organizerAddress: organizerAddress as `0x${string}`,
+        talentAddress: talentAddress as `0x${string}`,
+        tokenAddress: getSettlementTokenAddress(),
+        amount: vndToTokenAmount(agreedPrice),
+        feeBps: talentProfile?.commission_bps ?? 1000,
+      });
+    } catch (registerError) {
+      console.error(`[confirmBookingOffer] escrow registration failed for booking ${bookingId}:`, registerError);
+    }
+  }
+
   return { success: true };
 }
 
@@ -365,7 +401,7 @@ export async function markBookingPaid(bookingId: string): Promise<{ error: strin
 
   const { data: booking } = await supabase
     .from("package_bookings")
-    .select("organizer_id, status, payment_method, payment_status")
+    .select("organizer_id, status, payment_method, payment_status, payment_channel")
     .eq("id", bookingId)
     .single();
   if (!booking) return { error: "Booking not found." };
@@ -374,6 +410,9 @@ export async function markBookingPaid(bookingId: string): Promise<{ error: strin
     return { error: "This booking isn't confirmed yet." };
   }
   if (booking.payment_method !== "Prepaid") return { error: "This booking doesn't require prepayment." };
+  if (booking.payment_channel === "crypto") {
+    return { error: "This booking uses crypto escrow — use the Deposit action instead." };
+  }
   if (booking.payment_status === "complete") return { success: true };
 
   const { error } = await supabase
