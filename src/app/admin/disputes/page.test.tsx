@@ -5,6 +5,7 @@ mock.module("@/lib/supabase/admin-actions", () => ({
   resolveDisputeByRelease: async () => ({ success: true }),
   resolveDisputeByRefund: async () => ({ success: true }),
 }));
+mock.module("next/navigation", () => ({ useRouter: () => ({ refresh: () => {} }) }));
 
 let bookingsResult: unknown[] = [];
 mock.module("@/lib/supabase/service", () => ({

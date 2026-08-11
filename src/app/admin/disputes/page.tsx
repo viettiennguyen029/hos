@@ -1,6 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service";
-import { resolveDisputeByRelease, resolveDisputeByRefund } from "@/lib/supabase/admin-actions";
-import { Button } from "@/components/ui/button";
+import { DisputeRowActions } from "@/components/admin/dispute-row-actions";
 
 export default async function AdminDisputesPage() {
   const supabase = createServiceClient();
@@ -19,7 +18,7 @@ export default async function AdminDisputesPage() {
       </p>
       <div className="flex flex-col gap-3">
         {(bookings ?? []).map((booking) => (
-          <form
+          <div
             key={booking.id}
             className="flex items-center justify-between gap-4 rounded-md bg-white/5 p-4"
           >
@@ -27,26 +26,8 @@ export default async function AdminDisputesPage() {
               <span className="font-semibold text-foreground">Booking {booking.id}</span>
               <span className="text-muted-foreground">{booking.price_vnd.toLocaleString("en-US")} VND</span>
             </div>
-            <div className="flex gap-2">
-              <Button
-                formAction={async () => {
-                  "use server";
-                  await resolveDisputeByRelease(booking.id);
-                }}
-              >
-                Release to Talent
-              </Button>
-              <Button
-                variant="outline"
-                formAction={async () => {
-                  "use server";
-                  await resolveDisputeByRefund(booking.id);
-                }}
-              >
-                Refund Organizer
-              </Button>
-            </div>
-          </form>
+            <DisputeRowActions bookingId={booking.id} />
+          </div>
         ))}
         {(bookings ?? []).length === 0 && <p className="text-sm text-muted-foreground">No open disputes.</p>}
       </div>
