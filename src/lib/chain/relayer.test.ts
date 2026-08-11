@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it } from "bun:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generatePrivateKey, privateKeyToAccount, type LocalAccount } from "viem/accounts";
 import { recoverTypedDataAddress } from "viem";
@@ -48,8 +48,12 @@ function makeSupabase() {
 }
 
 describe("relayAsUser", () => {
+  afterEach(() => {
+    delete process.env.FORWARDER_ADDRESS;
+  });
+
   it("signs with the user's account, submits with the relayer's account, and returns the tx hash", async () => {
-    const { client } = makeSupabase();
+    const { client, eqCalls } = makeSupabase();
 
     process.env.FORWARDER_ADDRESS = FORWARDER_ADDRESS;
 
@@ -58,7 +62,7 @@ describe("relayAsUser", () => {
       chain: { id: 43113 },
       readContract: async (args: unknown) => {
         readContractArgs = args;
-        return 0n; // nonce
+        return 7n; // nonce
       },
     };
 
@@ -83,8 +87,14 @@ describe("relayAsUser", () => {
     expect(txHash).toBe("0xtxhash");
     expect(writeContractSignerAddress).toBe(RELAYER_ADDRESS);
     expect((readContractArgs as { args: string[] }).args).toEqual([USER_ADDRESS]);
+    expect(eqCalls).toEqual([
+      ["user_id", "user-1"],
+      ["chain", "avalanche"],
+      ["label", "relayer"],
+      ["chain", "avalanche"],
+    ]);
 
-    const request = (writeContractArgs as { args: [{ from: string; to: string; data: string; signature: string; value: bigint; gas: bigint; deadline: number }] }).args[0];
+    const request = (writeContractArgs as { args: [{ from: `0x${string}`; to: `0x${string}`; data: `0x${string}`; signature: `0x${string}`; value: bigint; gas: bigint; deadline: number }] }).args[0];
     expect(request.from).toBe(USER_ADDRESS);
     expect(request.to).toBe(TO_ADDRESS);
     expect(request.data).toBe("0xabcdef");
@@ -105,11 +115,9 @@ describe("relayAsUser", () => {
         ],
       },
       primaryType: "ForwardRequest",
-      message: { from: request.from, to: request.to, value: request.value, gas: request.gas, nonce: 0n, deadline: request.deadline, data: request.data },
+      message: { from: request.from, to: request.to, value: request.value, gas: request.gas, nonce: 7n, deadline: request.deadline, data: request.data },
       signature: request.signature,
     });
     expect(recoveredSigner).toBe(USER_ADDRESS);
-
-    delete process.env.FORWARDER_ADDRESS;
   });
 });

@@ -15,6 +15,13 @@ const DEFAULT_GAS = 500_000n;
  * wallet, then submits it via the platform's relayer wallet (which pays
  * AVAX gas) through the trusted ERC2771Forwarder. The target contract
  * sees the user's own address as _msgSender(), never the relayer's.
+ *
+ * @remarks This function performs NO authorization checks -- it will sign
+ * and relay any calldata to any contract as any user. Callers MUST
+ * authorize the (userId, to, data) combination themselves before calling
+ * this -- e.g. verifying the authenticated user matches userId, and that
+ * the calldata represents an action that user is actually allowed to take,
+ * before ever reaching this function.
  */
 export async function relayAsUser(
   supabase: SupabaseClient,

@@ -1,3 +1,5 @@
+import { isAddress } from "viem";
+
 /**
  * Minimal ABI slice of OpenZeppelin's ERC2771Forwarder -- only the two
  * functions this app calls. See contracts/node_modules/@openzeppelin/
@@ -37,5 +39,6 @@ export const forwarderAbi = [
 export function getForwarderAddress(): `0x${string}` {
   const address = process.env.FORWARDER_ADDRESS;
   if (!address) throw new Error("FORWARDER_ADDRESS is not set");
-  return address as `0x${string}`;
+  if (!isAddress(address)) throw new Error(`FORWARDER_ADDRESS "${address}" is not a valid address`);
+  return address;
 }

@@ -1,4 +1,4 @@
-import { describe, expect, it, mock } from "bun:test";
+import { afterEach, describe, expect, it, mock } from "bun:test";
 import { NextRequest } from "next/server";
 
 const checkPlatformWalletBalances = mock(
@@ -10,9 +10,12 @@ mock.module("@/lib/wallet/check-balances", () => ({ checkPlatformWalletBalances 
 mock.module("@/lib/supabase/service", () => ({ createServiceClient: () => ({}) }));
 
 describe("GET /api/cron/check-relayer-balance", () => {
+  afterEach(() => {
+    delete process.env.CRON_SECRET;
+  });
+
   it("returns 401 when CRON_SECRET is not set", async () => {
     checkPlatformWalletBalances.mockClear();
-    const oldSecret = process.env.CRON_SECRET;
     delete process.env.CRON_SECRET;
 
     const { GET } = await import("@/app/api/cron/check-relayer-balance/route");
@@ -24,8 +27,6 @@ describe("GET /api/cron/check-relayer-balance", () => {
 
     expect(response.status).toBe(401);
     expect(checkPlatformWalletBalances).not.toHaveBeenCalled();
-
-    if (oldSecret) process.env.CRON_SECRET = oldSecret;
   });
 
   it("returns 401 when Authorization header is missing", async () => {

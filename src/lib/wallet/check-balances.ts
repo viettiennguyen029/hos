@@ -21,6 +21,12 @@ export async function checkPlatformWalletBalances(
   const { data: wallets, error } = await supabase.from("wallets").select("label, address").in("label", LABELS).eq("chain", CHAIN);
   if (error) throw new Error(`Failed to list platform wallets: ${error.message}`);
 
+  const foundLabels = new Set((wallets ?? []).map((w) => w.label));
+  const missingLabels = LABELS.filter((label) => !foundLabels.has(label));
+  if (missingLabels.length > 0) {
+    throw new Error(`Missing platform wallet(s) for chain "${CHAIN}": ${missingLabels.join(", ")}`);
+  }
+
   const results: WalletBalanceStatus[] = [];
   for (const wallet of wallets ?? []) {
     const balanceWei = await publicClient.getBalance({ address: wallet.address as `0x${string}` });
