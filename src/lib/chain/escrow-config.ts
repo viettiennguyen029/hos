@@ -16,6 +16,12 @@ export function getSettlementTokenAddress(): `0x${string}` {
   return address;
 }
 
+export function getSettlementTokenPermitVersion(): string {
+  const version = process.env.SETTLEMENT_TOKEN_PERMIT_VERSION;
+  if (!version) throw new Error("SETTLEMENT_TOKEN_PERMIT_VERSION is not set");
+  return version;
+}
+
 /**
  * Converts a Supabase booking UUID into the bytes32 key EscrowManager
  * uses, matching the scheme documented in the contract plan: the UUID's

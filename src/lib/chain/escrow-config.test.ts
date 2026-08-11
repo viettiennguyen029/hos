@@ -3,12 +3,14 @@ import {
   bookingIdToBytes32,
   getEscrowManagerAddress,
   getSettlementTokenAddress,
+  getSettlementTokenPermitVersion,
   vndToTokenAmount,
 } from "@/lib/chain/escrow-config";
 
 afterEach(() => {
   delete process.env.ESCROW_MANAGER_ADDRESS;
   delete process.env.SETTLEMENT_TOKEN_ADDRESS;
+  delete process.env.SETTLEMENT_TOKEN_PERMIT_VERSION;
   delete process.env.VND_PER_USDT;
 });
 
@@ -43,6 +45,18 @@ describe("getSettlementTokenAddress", () => {
   it("returns a valid configured address", () => {
     process.env.SETTLEMENT_TOKEN_ADDRESS = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
     expect(getSettlementTokenAddress()).toBe("0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
+  });
+});
+
+describe("getSettlementTokenPermitVersion", () => {
+  it("throws when SETTLEMENT_TOKEN_PERMIT_VERSION is not set", () => {
+    delete process.env.SETTLEMENT_TOKEN_PERMIT_VERSION;
+    expect(() => getSettlementTokenPermitVersion()).toThrow(/SETTLEMENT_TOKEN_PERMIT_VERSION/);
+  });
+
+  it("returns the configured value", () => {
+    process.env.SETTLEMENT_TOKEN_PERMIT_VERSION = "1";
+    expect(getSettlementTokenPermitVersion()).toBe("1");
   });
 });
 
