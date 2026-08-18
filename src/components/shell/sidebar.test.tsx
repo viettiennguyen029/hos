@@ -40,4 +40,22 @@ describe("Sidebar", () => {
     const link = screen.getByRole("link", { name: "Rapper" });
     expect(link).toHaveAttribute("href", "/organizer/discover?category=Solo%20Singer&subcategory=Rapper");
   });
+
+  it("shows the showcase links (AI Assistant, Smart Contract Escrow) for organizers", () => {
+    render(<Sidebar role="organizer" kycStatus="verified" categories={CATEGORIES} cities={[]} />);
+    expect(screen.getByRole("link", { name: /ai talent assistant/i })).toHaveAttribute(
+      "href",
+      "/organizer/ai-assistant"
+    );
+    expect(screen.getByRole("link", { name: /smart contract escrow/i })).toHaveAttribute(
+      "href",
+      "/organizer/smart-contract"
+    );
+  });
+
+  it("hides the showcase links for non-organizer roles", () => {
+    render(<Sidebar role="talent" kycStatus="verified" categories={CATEGORIES} cities={[]} />);
+    expect(screen.queryByText(/ai talent assistant/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/smart contract escrow/i)).not.toBeInTheDocument();
+  });
 });

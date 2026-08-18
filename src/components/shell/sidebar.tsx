@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, ChevronRight, Grid2x2, Headset, Home, Info, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, Grid2x2, Headset, Home, Info, Plus, ShieldCheck, Sparkles } from "lucide-react";
 import { CreatePackageDialog } from "@/components/create-package/create-package-dialog";
 import { SidebarLogo } from "@/components/shell/sidebar-logo";
 import {
@@ -90,6 +90,28 @@ export function Sidebar({
             <span className="absolute right-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-l-full bg-primary" />
           )}
         </Link>
+
+        {role === "organizer" && (
+          <div className="mb-2 flex flex-col gap-1">
+            <span className="px-4 pt-1 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+              Showcase
+            </span>
+            <Link
+              href={`/${role}/ai-assistant`}
+              className="flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+            >
+              <Sparkles className="size-5 shrink-0" />
+              <span className="flex-1">AI Talent Assistant</span>
+            </Link>
+            <Link
+              href={`/${role}/smart-contract`}
+              className="flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+            >
+              <ShieldCheck className="size-5 shrink-0" />
+              <span className="flex-1">Smart Contract Escrow</span>
+            </Link>
+          </div>
+        )}
 
         <button
           type="button"
