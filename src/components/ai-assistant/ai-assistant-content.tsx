@@ -78,8 +78,9 @@ export function AiAssistantContent() {
     },
   ]);
   const [step, setStep] = useState(0);
-  const [typing, setTyping] = useState(false);
+  const [thinkingLabel, setThinkingLabel] = useState<string | null>(null);
   const [input, setInput] = useState("");
+  const typing = thinkingLabel !== null;
 
   function appendBot(message: Omit<ChatMessage, "id" | "role">) {
     setMessages((prev) => [...prev, { id: nextId(), role: "bot", ...message }]);
@@ -91,11 +92,20 @@ export function AiAssistantContent() {
 
     setMessages((prev) => [...prev, { id: nextId(), role: "user", text }]);
     setInput("");
-    setTyping(true);
 
-    const delay = step === 1 ? 700 : 500;
+    const isBooking = step === 2 && text.startsWith("Book ");
+    const { delay, label } =
+      step === 0
+        ? { delay: 1600, label: "Reading your event details…" }
+        : step === 1
+          ? { delay: 2400, label: "Searching matching talents…" }
+          : isBooking
+            ? { delay: 1300, label: "Sending your booking request…" }
+            : { delay: 900, label: "Thinking…" };
+
+    setThinkingLabel(label);
     setTimeout(() => {
-      setTyping(false);
+      setThinkingLabel(null);
       if (step === 0) {
         appendBot({ text: "Quick follow-up — what's your preferred music genre or performance style?" });
         setStep(1);
@@ -133,7 +143,7 @@ export function AiAssistantContent() {
           {messages.map((message) => (
             <ChatBubble key={message.id} message={message} onBook={(name) => handleSend(`Book ${name}`)} />
           ))}
-          {typing && <TypingBubble />}
+          {thinkingLabel && <TypingBubble label={thinkingLabel} />}
         </div>
 
         {messages.length === 1 && (
@@ -245,13 +255,16 @@ function ChatBubble({ message, onBook }: { message: ChatMessage; onBook: (talent
   );
 }
 
-function TypingBubble() {
+function TypingBubble({ label }: { label: string }) {
   return (
     <div className="flex justify-start">
-      <div className="flex items-center gap-1 rounded-[8px] bg-white/10 px-4 py-3">
-        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
-        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
-        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground" />
+      <div className="flex items-center gap-2 rounded-[8px] bg-white/10 px-4 py-3">
+        <span className="flex items-center gap-1">
+          <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
+          <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
+          <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground" />
+        </span>
+        <span className="text-xs text-muted-foreground">{label}</span>
       </div>
     </div>
   );
