@@ -16,8 +16,8 @@ interface LogEntry {
   timestamp: string;
 }
 
-/** Demo fixture data — visual only, no live chain connection. */
-const CONTRACT_ADDRESS = "0x43Ce77962af1a02cf1789a12Ea9EC58b29A7d55d";
+/** Demo fixture data — entirely fake, no live chain connection or real contract. */
+const CONTRACT_ADDRESS = "0xe94fab976c8c1d0c6f8e574dfd8e8c2a772f1935";
 const AMOUNT_VND = 20_000_000;
 const AMOUNT_AVAX = "38.4 AVAX";
 
