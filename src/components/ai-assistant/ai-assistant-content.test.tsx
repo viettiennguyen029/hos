@@ -44,6 +44,9 @@ describe("AiAssistantContent", () => {
       fireEvent.click(screen.getAllByRole("button", { name: "Book" })[0]);
 
       await screen.findByText(/sent a booking request to the acoustic trio/i, {}, { timeout: 3000 });
+
+      const contractLink = screen.getByRole("link", { name: /smart contract escrow/i });
+      expect(contractLink).toHaveAttribute("href", "/organizer/smart-contract");
     },
     8000
   );

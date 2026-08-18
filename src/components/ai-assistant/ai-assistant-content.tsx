@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Send, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatPriceRange } from "@/components/shell/listing-card";
@@ -22,6 +23,7 @@ interface ChatMessage {
   role: "bot" | "user";
   text?: string;
   recommendations?: Recommendation[];
+  cta?: { label: string; href: string };
 }
 
 /** Scripted demo data — no live matching backend yet. */
@@ -119,6 +121,10 @@ export function AiAssistantContent() {
         const talentName = text.slice("Book ".length);
         appendBot({
           text: `Great choice! I've sent a booking request to ${talentName} on your behalf — you can track its status under My Orders.`,
+        });
+        appendBot({
+          text: "Your payment stays protected the whole time — it's held in escrow by a smart contract, not handed to anyone upfront.",
+          cta: { label: "View Smart Contract Escrow", href: "/organizer/smart-contract" },
         });
         setStep(3);
       } else {
@@ -242,7 +248,7 @@ function ChatBubble({ message, onBook }: { message: ChatMessage; onBook: (talent
 
   const isUser = message.role === "user";
   return (
-    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+    <div className={cn("flex flex-col gap-2", isUser ? "items-end" : "items-start")}>
       <div
         className={cn(
           "max-w-[80%] rounded-[8px] px-4 py-2.5 text-sm",
@@ -251,6 +257,14 @@ function ChatBubble({ message, onBook }: { message: ChatMessage; onBook: (talent
       >
         {message.text}
       </div>
+      {message.cta && (
+        <Button asChild size="sm" variant="secondary" className="rounded-[6px]">
+          <Link href={message.cta.href}>
+            <ShieldCheck className="size-3.5" />
+            {message.cta.label}
+          </Link>
+        </Button>
+      )}
     </div>
   );
 }
