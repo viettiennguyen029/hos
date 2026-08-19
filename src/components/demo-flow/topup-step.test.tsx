@@ -14,19 +14,23 @@ function renderStep() {
 }
 
 describe("TopupStep", () => {
-  it("shows the deposit button before funding", () => {
+  it("shows the deposit button and the from/to wallet addresses before funding", () => {
     renderStep();
     expect(screen.getByRole("button", { name: /deposit via crypto/i })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /continue/i })).not.toBeInTheDocument();
+    expect(screen.getByText("0x7bbe8d…8035d5")).toBeInTheDocument();
+    expect(screen.getByText("0xe94fab…2f1935")).toBeInTheDocument();
   });
 
   it(
-    "deposits and reveals a Continue link to the Booked step",
+    "deposits, shows the deposit tx hash, and reveals a Continue link to the Booked step",
     async () => {
       renderStep();
       fireEvent.click(screen.getByRole("button", { name: /deposit via crypto/i }));
 
       await screen.findByText(/funds locked in escrow/i, {}, { timeout: 3000 });
+      expect(screen.getByText("0x5e78fc…d3e1de")).toBeInTheDocument();
+
       const continueLink = screen.getByRole("link", { name: /continue/i });
       expect(continueLink).toHaveAttribute("href", "/demo/booked");
     },

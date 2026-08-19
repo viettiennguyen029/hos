@@ -63,7 +63,15 @@ const SUGGESTED_PROMPTS = [
   "DJ for a rooftop birthday party, budget ~8M VND",
 ];
 
-const QUICK_REPLIES = ["Acoustic / Pop", "EDM / Dance", "Traditional / Cultural", "No preference"];
+const QUICK_REPLIES_GENRE = ["Acoustic / Pop", "EDM / Dance", "Traditional / Cultural", "No preference"];
+const QUICK_REPLIES_VENUE = ["Indoor, ~100 guests", "Outdoor, ~200 guests", "Outdoor, 300+ guests", "Not sure yet"];
+const QUICK_REPLIES_SONGS = ["Specific song list", "Their choice is fine", "A mix of both"];
+
+const QUICK_REPLIES_BY_STEP: Record<number, string[]> = {
+  1: QUICK_REPLIES_GENRE,
+  2: QUICK_REPLIES_VENUE,
+  3: QUICK_REPLIES_SONGS,
+};
 
 let messageSeq = 0;
 function nextId() {
@@ -98,7 +106,11 @@ export function ChatStep() {
     const { delay, label } =
       step === 0
         ? { delay: 1600, label: "Reading your event details…" }
-        : { delay: 2400, label: "Searching matching talents…" };
+        : step === 1
+          ? { delay: 1300, label: "Noting your style preference…" }
+          : step === 2
+            ? { delay: 1300, label: "Checking venue logistics…" }
+            : { delay: 2400, label: "Searching matching talents…" };
 
     setThinkingLabel(label);
     setTimeout(() => {
@@ -107,11 +119,17 @@ export function ChatStep() {
         appendBot({ text: "Quick follow-up — what's your preferred music genre or performance style?" });
         setStep(1);
       } else if (step === 1) {
+        appendBot({ text: "Got it. Is the venue indoor or outdoor, and roughly how many guests are you expecting?" });
+        setStep(2);
+      } else if (step === 2) {
+        appendBot({ text: "Almost done — do they need to follow a specific song list, or can they choose the set?" });
+        setStep(3);
+      } else if (step === 3) {
         appendBot({
-          text: "Thanks! Based on your event type, guest count, location, and budget, here are the best-matching talents I found:",
+          text: "Thanks! Based on your event type, guest count, venue, and budget, here are the best-matching talents I found:",
         });
         appendBot({ recommendations: RECOMMENDATIONS });
-        setStep(2);
+        setStep(4);
       }
     }, delay);
   }
@@ -148,9 +166,9 @@ export function ChatStep() {
           </div>
         )}
 
-        {step === 1 && (
+        {QUICK_REPLIES_BY_STEP[step] && (
           <div className="flex flex-wrap gap-2">
-            {QUICK_REPLIES.map((reply) => (
+            {QUICK_REPLIES_BY_STEP[step].map((reply) => (
               <button
                 key={reply}
                 type="button"
@@ -163,7 +181,7 @@ export function ChatStep() {
           </div>
         )}
 
-        {step < 2 && (
+        {step < 4 && (
           <form
             className="flex items-center gap-2"
             onSubmit={(event) => {

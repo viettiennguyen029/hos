@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AiFlowBanner } from "@/components/shell/ai-flow-banner";
 import { CardCarousel } from "@/components/shell/card-carousel";
 import { ListingCard, ListingRow } from "@/components/shell/listing-card";
 import { PromoCard } from "@/components/shell/promo-card";
@@ -33,6 +34,8 @@ export async function HomeContent({ role }: { role: Role }) {
 
   return (
     <div className="flex flex-col gap-14 py-8">
+      <AiFlowBanner />
+
       {mostPopular.length > 0 && (
         <CardCarousel title="Most Popular Talents in Heart of Show" viewAllHref={`/${role}/discover`}>
           {mostPopular.map((pkg) => (
