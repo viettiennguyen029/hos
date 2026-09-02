@@ -30,7 +30,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
   const [checked, setChecked] = useState<Record<string, boolean>>(
     Object.fromEntries(cartItems.map((i) => [i.id, true]))
   );
-  const [paymentMethod, setPaymentMethod] = useState<"Prepaid" | "Postpaid">("Prepaid");
+  const [paymentChannel, setPaymentChannel] = useState<"fiat" | "crypto">("crypto");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [sent, setSent] = useState(false);
@@ -65,7 +65,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
     setError(undefined);
     setPending(true);
     const formData = new FormData();
-    formData.set("paymentMethod", paymentMethod);
+    formData.set("paymentChannel", paymentChannel);
     for (const id of Object.keys(checked).filter((id) => checked[id])) {
       formData.append("itemIds", id);
     }
@@ -186,25 +186,37 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
           <div className="flex flex-col gap-3">
             <h2 className="text-lg font-bold tracking-[-0.03em] text-foreground">Payment Method</h2>
             <div className="grid grid-cols-2 gap-3">
-              {(["Prepaid", "Postpaid"] as const).map((method) => (
+              {(
+                [
+                  { value: "fiat" as const, label: "Fiat Payment", disabled: true },
+                  { value: "crypto" as const, label: "Crypto Payment", disabled: false },
+                ]
+              ).map(({ value, label, disabled }) => (
                 <button
-                  key={method}
+                  key={value}
                   type="button"
-                  onClick={() => setPaymentMethod(method)}
+                  disabled={disabled}
+                  onClick={() => setPaymentChannel(value)}
                   className={cn(
                     "flex items-center gap-2 rounded-[8px] border border-transparent bg-white/5 px-4 py-3 text-sm font-medium text-foreground transition-colors",
-                    paymentMethod === method && "border-primary bg-primary/5"
+                    paymentChannel === value && "border-primary bg-primary/5",
+                    disabled && "cursor-not-allowed opacity-50"
                   )}
                 >
                   <span
                     className={cn(
                       "flex size-4 shrink-0 items-center justify-center rounded-full border",
-                      paymentMethod === method ? "border-primary" : "border-white/30"
+                      paymentChannel === value ? "border-primary" : "border-white/30"
                     )}
                   >
-                    {paymentMethod === method && <span className="size-2 rounded-full bg-primary" />}
+                    {paymentChannel === value && <span className="size-2 rounded-full bg-primary" />}
                   </span>
-                  {method}
+                  <span className="flex flex-col items-start">
+                    {label}
+                    {disabled && (
+                      <span className="text-[10px] font-normal text-muted-foreground">Coming soon</span>
+                    )}
+                  </span>
                 </button>
               ))}
             </div>

@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Role } from "@/lib/nav-items";
+import { provisionWalletForUser } from "@/lib/wallet/provision";
+import { createServiceClient } from "@/lib/supabase/service";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -30,7 +32,7 @@ export async function signUp(formData: FormData): Promise<{ error: string } | { 
   const role = String(formData.get("role") ?? "organizer") as Role;
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -39,6 +41,18 @@ export async function signUp(formData: FormData): Promise<{ error: string } | { 
     },
   });
   if (error) return { error: error.message };
+
+  if ((role === "organizer" || role === "talent") && data.user) {
+    // Best-effort: the auth account already exists at this point, and
+    // provisionWalletForUser is idempotent, so a transient failure here
+    // is recovered the next time it's called rather than failing the
+    // whole signup over an auxiliary step.
+    try {
+      await provisionWalletForUser(createServiceClient(), data.user.id);
+    } catch (walletError) {
+      console.error(`[signUp] wallet provisioning failed for user ${data.user.id}:`, walletError);
+    }
+  }
 
   return { success: true };
 }

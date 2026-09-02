@@ -284,6 +284,12 @@ export type BookingParty = "talent" | "organizer";
  */
 export type BookingPaymentStatus = "pending" | "complete";
 
+/** How a Prepaid booking's payment moves -- null for pre-existing/Postpaid bookings, which never had a channel. */
+export type PaymentChannel = "fiat" | "crypto";
+
+/** On-chain escrow lifecycle for a crypto-channel booking -- advanced by the indexer as EscrowManager events land. */
+export type EscrowState = "none" | "registered" | "funded" | "released" | "refunded";
+
 export interface PackageBookingRow {
   id: string;
   package_id: string;
@@ -303,6 +309,16 @@ export interface PackageBookingRow {
   payment_status: BookingPaymentStatus;
   /** Set when the talent flags the event as done -- proof + a reminder to the organizer, not a status change. */
   talent_marked_complete_at: string | null;
+  /**
+   * Optional (rather than always-required) so pre-crypto-feature call sites
+   * building a row/fixture without these columns still typecheck -- every
+   * row actually fetched from the DB (select *) has them, defaulting to
+   * fiat/'none' semantics when absent.
+   */
+  payment_channel?: PaymentChannel | null;
+  /** The EscrowManager bytes32 booking id, once registered on-chain -- null until then. */
+  escrow_booking_id?: string | null;
+  escrow_state?: EscrowState;
   created_at: string;
   updated_at: string;
 }

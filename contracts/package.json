@@ -1,0 +1,20 @@
+{
+  "name": "hos-contracts",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test && hardhat test scripts/deploy.test.ts",
+    "deploy:fuji": "hardhat run scripts/deploy.ts --network avalancheFuji",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network avalanche"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "5.1.0",
+    "@openzeppelin/contracts-upgradeable": "5.1.0",
+    "@openzeppelin/hardhat-upgrades": "^3.5.0",
+    "dotenv": "^16.4.0",
+    "hardhat": "^2.22.0",
+    "typescript": "^5.6.0"
+  }
+}

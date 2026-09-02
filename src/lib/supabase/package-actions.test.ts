@@ -1,12 +1,78 @@
 import { afterEach, describe, expect, it, mock } from "bun:test";
+import { bookingIdToBytes32, getSettlementTokenAddress, vndToTokenAmount } from "@/lib/chain/escrow-config";
 
 const revalidatePath = mock(() => {});
 mock.module("next/cache", () => ({ revalidatePath }));
+
+const callOrder: string[] = [];
+
+const registerEscrowBooking = mock(async (_supabase: unknown, _params: unknown) => {
+  callOrder.push("register-escrow-booking");
+  return "0xtxhash" as const;
+});
+const depositEscrow = mock(async (_supabase: unknown, _userId: string, _params: unknown) => ({
+  approveTxHash: null,
+  depositTxHash: "0xdeposittxhash" as const,
+}));
+const releaseEscrowToTalent = mock(async (_supabase: unknown, _userId: string, _bookingId: unknown) => "0xreleasetxhash" as const);
+mock.module("@/lib/chain/escrow", () => ({ registerEscrowBooking, depositEscrow, releaseEscrowToTalent }));
+
+const provisionWalletForUser = mock(async (_client: unknown, userId: string) => ({ address: `0xwallet-${userId}` }));
+mock.module("@/lib/wallet/provision", () => ({ provisionWalletForUser }));
+
+let serviceCommissionBps: number | null = 1200;
+let serviceUpdatedPackageBookings: Record<string, unknown> | undefined;
+let serviceWalletRow: { address: string; chain: string } | null = { address: "0xtalentwallet", chain: "avalanche" };
+let serviceWalletError: { message: string } | null = null;
+const serviceWalletEqCalls: [string, unknown][] = [];
+const serviceClient = {
+  from: (table: string) => {
+    if (table === "profiles") {
+      return {
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: { commission_bps: serviceCommissionBps } }),
+          }),
+        }),
+      };
+    }
+    if (table === "package_bookings") {
+      return {
+        update: (row: Record<string, unknown>) => {
+          serviceUpdatedPackageBookings = row;
+          callOrder.push("db-update-escrow-booking-id");
+          return { eq: async () => ({ error: null }) };
+        },
+      };
+    }
+    if (table === "wallets") {
+      return {
+        select: () => ({
+          eq: (col: string, val: unknown) => {
+            serviceWalletEqCalls.push([col, val]);
+            return {
+              eq: (col2: string, val2: unknown) => {
+                serviceWalletEqCalls.push([col2, val2]);
+                return {
+                  maybeSingle: async () => ({ data: serviceWalletRow, error: serviceWalletError }),
+                };
+              },
+            };
+          },
+        }),
+      };
+    }
+    throw new Error(`unexpected service table ${table}`);
+  },
+};
+mock.module("@/lib/supabase/service", () => ({ createServiceClient: () => serviceClient }));
 
 const USER_ID = "11111111-1111-1111-1111-111111111111";
 
 const TALENT_ID = "22222222-2222-2222-2222-222222222222";
 const ORGANIZER_ID = "33333333-3333-3333-3333-333333333333";
+const BOOKING_ID = "55555555-5555-5555-5555-555555555555";
+const TOKEN_ADDRESS = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
 
 interface FakeBooking {
   organizer_id: string;
@@ -15,10 +81,14 @@ interface FakeBooking {
   organizer_offer_vnd: number;
   talent_id: string;
   payment_method?: "Prepaid" | "Postpaid";
+  payment_channel?: "fiat" | "crypto" | null;
   status?: string;
   payment_status?: "pending" | "complete";
   booked_date?: string | null;
   booked_end_time?: string | null;
+  price_vnd?: number;
+  escrow_booking_id?: string | null;
+  escrow_state?: string;
 }
 
 function makeSupabase(options: {
@@ -28,7 +98,7 @@ function makeSupabase(options: {
   packageTalentId?: string;
   busySlots?: { busy_date: string; start_time: string; end_time: string }[];
 }) {
-  const inserted: { packages?: Record<string, unknown>; cart_items?: Record<string, unknown> } = {};
+  const inserted: { packages?: Record<string, unknown>; cart_items?: Record<string, unknown>; package_bookings?: Record<string, unknown>[] } = {};
   const updated: { packages?: Record<string, unknown>; package_bookings?: Record<string, unknown> } = {};
 
   return {
@@ -66,10 +136,32 @@ function makeSupabase(options: {
       }
       if (table === "cart_items") {
         return {
+          select: () => ({
+            eq: (col: string, val: unknown) => ({
+              in: async (col2: string, vals: unknown[]) => ({
+                data: [
+                  {
+                    id: "cart-1",
+                    package_id: "pkg-1",
+                    organizer_id: options.user?.id,
+                    price_vnd: 5_000_000,
+                    booked_date: "2026-12-01",
+                    booked_time: "20:00",
+                    booked_end_time: "21:00",
+                    city_id: "city-1",
+                    address: "123 Main St",
+                  },
+                ],
+              }),
+            }),
+          }),
           insert: async (row: Record<string, unknown>) => {
             inserted.cart_items = row;
             return { error: null };
           },
+          delete: () => ({
+            in: async () => ({ error: null }),
+          }),
         };
       }
       if (table === "package_bookings") {
@@ -84,15 +176,26 @@ function makeSupabase(options: {
                       talent_offer_vnd: options.booking.talent_offer_vnd,
                       organizer_offer_vnd: options.booking.organizer_offer_vnd,
                       payment_method: options.booking.payment_method ?? "Prepaid",
+                      payment_channel: options.booking.payment_channel ?? null,
                       status: options.booking.status ?? "confirmed",
                       payment_status: options.booking.payment_status ?? "pending",
                       booked_date: options.booking.booked_date ?? "2020-01-01",
                       booked_end_time: options.booking.booked_end_time ?? "00:00:00",
+                      price_vnd: options.booking.price_vnd ?? options.booking.talent_offer_vnd,
+                      escrow_booking_id: options.booking.escrow_booking_id ?? null,
+                      escrow_state: options.booking.escrow_state ?? "none",
                       package: { talent_id: options.booking.talent_id },
                     }
                   : null,
               }),
             }),
+          }),
+          insert: async (rows: Record<string, unknown>[]) => {
+            inserted.package_bookings = rows;
+            return { error: null };
+          },
+          delete: () => ({
+            in: async () => ({ error: null }),
           }),
           update: (row: Record<string, unknown>) => {
             updated.package_bookings = row;
@@ -119,6 +222,8 @@ import {
   confirmBookingOffer,
   createPackage,
   deletePackage,
+  depositBookingEscrow,
+  getTalentWalletForBooking,
   markBookingPaid,
   organizerMarkComplete,
   rejectBooking,
@@ -130,6 +235,18 @@ import {
 
 afterEach(() => {
   revalidatePath.mockClear();
+  registerEscrowBooking.mockClear();
+  depositEscrow.mockClear();
+  releaseEscrowToTalent.mockClear();
+  provisionWalletForUser.mockClear();
+  serviceCommissionBps = 1200;
+  serviceUpdatedPackageBookings = undefined;
+  serviceWalletRow = { address: "0xtalentwallet", chain: "avalanche" };
+  serviceWalletError = null;
+  serviceWalletEqCalls.length = 0;
+  callOrder.length = 0;
+  delete process.env.SETTLEMENT_TOKEN_ADDRESS;
+  delete process.env.VND_PER_USDT;
 });
 
 function packageFormData(overrides: Record<string, string> = {}): FormData {
@@ -146,6 +263,14 @@ function packageFormData(overrides: Record<string, string> = {}): FormData {
   formData.set("priceMin", "1000000");
   formData.set("priceMax", "2000000");
   formData.set("paymentMethod", "Prepaid");
+  for (const [key, value] of Object.entries(overrides)) formData.set(key, value);
+  return formData;
+}
+
+function checkoutFormData(overrides: Record<string, string> = {}): FormData {
+  const formData = new FormData();
+  formData.append("itemIds", "cart-1");
+  formData.set("paymentChannel", "fiat");
   for (const [key, value] of Object.entries(overrides)) formData.set(key, value);
   return formData;
 }
@@ -323,6 +448,98 @@ describe("confirmBookingOffer", () => {
     });
     expect(await confirmBookingOffer("booking-1")).toEqual({ error: "You are not part of this booking." });
   });
+
+  it("provisions wallets for both parties and registers the escrow booking on-chain for a crypto booking", async () => {
+    process.env.SETTLEMENT_TOKEN_ADDRESS = TOKEN_ADDRESS;
+    process.env.VND_PER_USDT = "25000";
+    supabaseMock = makeSupabase({
+      user: { id: TALENT_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: "talent",
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 4_500_000,
+        payment_channel: "crypto",
+      },
+    });
+    const result = await confirmBookingOffer(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+
+    expect(provisionWalletForUser).toHaveBeenCalledTimes(2);
+    const provisionedUserIds = provisionWalletForUser.mock.calls.map((call) => call[1]);
+    expect(provisionedUserIds).toContain(ORGANIZER_ID);
+    expect(provisionedUserIds).toContain(TALENT_ID);
+
+    expect(registerEscrowBooking).toHaveBeenCalledTimes(1);
+    expect(registerEscrowBooking.mock.calls[0]?.[1]).toEqual({
+      bookingId: bookingIdToBytes32(BOOKING_ID),
+      organizerAddress: `0xwallet-${ORGANIZER_ID}`,
+      talentAddress: `0xwallet-${TALENT_ID}`,
+      tokenAddress: getSettlementTokenAddress(),
+      amount: vndToTokenAmount(4_500_000),
+      feeBps: 1200,
+    });
+  });
+
+  it("persists escrow_booking_id to package_bookings via the service client before registering on-chain", async () => {
+    process.env.SETTLEMENT_TOKEN_ADDRESS = TOKEN_ADDRESS;
+    process.env.VND_PER_USDT = "25000";
+    supabaseMock = makeSupabase({
+      user: { id: TALENT_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: "talent",
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 4_500_000,
+        payment_channel: "crypto",
+      },
+    });
+    const result = await confirmBookingOffer(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+
+    expect(serviceUpdatedPackageBookings).toEqual({ escrow_booking_id: bookingIdToBytes32(BOOKING_ID) });
+    expect(callOrder).toEqual(["db-update-escrow-booking-id", "register-escrow-booking"]);
+  });
+
+  it("does not register escrow on-chain for a fiat (or null payment_channel) booking", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: TALENT_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: "talent",
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 4_500_000,
+      },
+    });
+    const result = await confirmBookingOffer(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+    expect(registerEscrowBooking).not.toHaveBeenCalled();
+    expect(provisionWalletForUser).not.toHaveBeenCalled();
+  });
+
+  it("still returns success when escrow registration throws (best-effort)", async () => {
+    process.env.SETTLEMENT_TOKEN_ADDRESS = TOKEN_ADDRESS;
+    process.env.VND_PER_USDT = "25000";
+    registerEscrowBooking.mockImplementationOnce(async () => {
+      throw new Error("boom");
+    });
+    supabaseMock = makeSupabase({
+      user: { id: TALENT_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: "talent",
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 4_500_000,
+        payment_channel: "crypto",
+      },
+    });
+    const result = await confirmBookingOffer(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+  });
 });
 
 describe("markBookingPaid", () => {
@@ -396,6 +613,170 @@ describe("markBookingPaid", () => {
       },
     });
     expect(await markBookingPaid("booking-1")).toEqual({ error: "This booking doesn't require prepayment." });
+  });
+
+  it("rejects crypto bookings, which use the Deposit action instead", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        payment_method: "Prepaid",
+        status: "confirmed",
+        payment_status: "pending",
+        payment_channel: "crypto",
+      },
+    });
+    expect(await markBookingPaid("booking-1")).toEqual({
+      error: "This booking uses crypto escrow — use the Deposit action instead.",
+    });
+    expect(supabaseMock.__updated.package_bookings).toBeUndefined();
+  });
+});
+
+describe("depositBookingEscrow", () => {
+  it("rejects when not signed in", async () => {
+    supabaseMock = makeSupabase({ user: null });
+    expect(await depositBookingEscrow("booking-1")).toEqual({ error: "You must be signed in." });
+  });
+
+  it("rejects when the caller isn't the booking's organizer", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: TALENT_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        escrow_state: "registered",
+        escrow_booking_id: "0xescrowbooking",
+      },
+    });
+    expect(await depositBookingEscrow("booking-1")).toEqual({
+      error: "Only the organizer can deposit for this booking.",
+    });
+  });
+
+  it("rejects when escrow_state isn't 'registered' -- nothing to deposit against yet", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        escrow_state: "none",
+        escrow_booking_id: null,
+      },
+    });
+    expect(await depositBookingEscrow("booking-1")).toEqual({
+      error: "This booking isn't ready for deposit.",
+    });
+  });
+
+  it("calls depositEscrow with the booking's escrow id, token address, organizer's wallet, and the token amount, on success", async () => {
+    process.env.SETTLEMENT_TOKEN_ADDRESS = TOKEN_ADDRESS;
+    process.env.VND_PER_USDT = "25000";
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        price_vnd: 5_000_000,
+        escrow_state: "registered",
+        escrow_booking_id: "0xescrowbooking",
+      },
+    });
+    const result = await depositBookingEscrow(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+
+    expect(depositEscrow).toHaveBeenCalledTimes(1);
+    expect(depositEscrow.mock.calls[0]?.[1]).toBe(ORGANIZER_ID);
+    expect(depositEscrow.mock.calls[0]?.[2]).toEqual({
+      bookingId: "0xescrowbooking",
+      tokenAddress: getSettlementTokenAddress(),
+      organizerAddress: `0xwallet-${ORGANIZER_ID}`,
+      amount: vndToTokenAmount(5_000_000),
+    });
+  });
+});
+
+describe("getTalentWalletForBooking", () => {
+  it("rejects when not signed in", async () => {
+    supabaseMock = makeSupabase({ user: null });
+    expect(await getTalentWalletForBooking("booking-1")).toEqual({ error: "You must be signed in." });
+  });
+
+  it("rejects when the caller is the booking's talent, not the organizer", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: TALENT_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+      },
+    });
+    expect(await getTalentWalletForBooking("booking-1")).toEqual({ error: "Only the organizer can view this." });
+  });
+
+  it("rejects when the caller is an unrelated user, not part of the booking", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: "44444444-4444-4444-4444-444444444444" },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+      },
+    });
+    expect(await getTalentWalletForBooking("booking-1")).toEqual({ error: "You are not part of this booking." });
+  });
+
+  it("returns the talent's wallet address/chain from the service-role wallets query, scoped by the booking's talent id", async () => {
+    serviceWalletRow = { address: "0xtalentaddress123", chain: "avalanche" };
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+      },
+    });
+    const result = await getTalentWalletForBooking("booking-1");
+    expect(result).toEqual({ address: "0xtalentaddress123", chain: "avalanche" });
+    expect(serviceWalletEqCalls).toEqual([
+      ["user_id", TALENT_ID],
+      ["chain", "avalanche"],
+    ]);
+  });
+
+  it("returns an error (not a thrown exception) when the talent has no wallet on file", async () => {
+    serviceWalletRow = null;
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+      },
+    });
+    const result = await getTalentWalletForBooking("booking-1");
+    expect(result).toEqual({ error: "Talent has no wallet on file." });
   });
 });
 
@@ -548,6 +929,98 @@ describe("organizerMarkComplete", () => {
     expect(await organizerMarkComplete("booking-1")).toEqual({
       error: "This booking can't be marked completed until its end time has passed.",
     });
+  });
+
+  it("calls releaseEscrowToTalent on a crypto booking with escrow_state: funded", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        status: "confirmed",
+        booked_date: "2020-01-01",
+        booked_end_time: "00:00:00",
+        payment_channel: "crypto",
+        escrow_state: "funded",
+        escrow_booking_id: "0xescrowid123",
+      },
+    });
+    const result = await organizerMarkComplete(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+    expect(releaseEscrowToTalent).toHaveBeenCalledTimes(1);
+    expect(releaseEscrowToTalent.mock.calls[0]?.[1]).toBe(ORGANIZER_ID);
+    expect(releaseEscrowToTalent.mock.calls[0]?.[2]).toBe("0xescrowid123");
+  });
+
+  it("does not call releaseEscrowToTalent on a fiat booking", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        status: "confirmed",
+        booked_date: "2020-01-01",
+        booked_end_time: "00:00:00",
+        payment_channel: "fiat",
+        escrow_state: "none",
+        escrow_booking_id: null,
+      },
+    });
+    const result = await organizerMarkComplete(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+    expect(releaseEscrowToTalent).not.toHaveBeenCalled();
+  });
+
+  it("does not call releaseEscrowToTalent on a crypto booking with escrow_state not funded", async () => {
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        status: "confirmed",
+        booked_date: "2020-01-01",
+        booked_end_time: "00:00:00",
+        payment_channel: "crypto",
+        escrow_state: "registered",
+        escrow_booking_id: "0xescrowid123",
+      },
+    });
+    const result = await organizerMarkComplete(BOOKING_ID);
+    expect(result).toEqual({ success: true });
+    expect(releaseEscrowToTalent).not.toHaveBeenCalled();
+  });
+
+  it("still returns success when releaseEscrowToTalent throws (best-effort)", async () => {
+    releaseEscrowToTalent.mockImplementationOnce(async () => {
+      throw new Error("boom");
+    });
+    supabaseMock = makeSupabase({
+      user: { id: ORGANIZER_ID },
+      booking: {
+        organizer_id: ORGANIZER_ID,
+        talent_id: TALENT_ID,
+        awaiting_response_from: null,
+        talent_offer_vnd: 5_000_000,
+        organizer_offer_vnd: 5_000_000,
+        status: "confirmed",
+        booked_date: "2020-01-01",
+        booked_end_time: "00:00:00",
+        payment_channel: "crypto",
+        escrow_state: "funded",
+        escrow_booking_id: "0xescrowid123",
+      },
+    });
+    const result = await organizerMarkComplete(BOOKING_ID);
+    expect(result).toEqual({ success: true });
   });
 });
 
@@ -729,5 +1202,18 @@ describe("addToCart", () => {
       cartFormData({ bookedDate: "2026-12-01", bookedTime: "10:00", bookedEndTime: "11:00" })
     );
     expect(result).toEqual({ success: true });
+  });
+});
+
+describe("checkoutCart", () => {
+  it("inserts package_bookings with payment_method: Prepaid and payment_channel from formData", async () => {
+    supabaseMock = makeSupabase({ user: { id: USER_ID } });
+    const result = await checkoutCart(checkoutFormData({ paymentChannel: "crypto" }));
+    expect(result).toEqual({ success: true });
+    expect(supabaseMock.__inserted.package_bookings).toBeDefined();
+    expect(supabaseMock.__inserted.package_bookings?.[0]).toMatchObject({
+      payment_method: "Prepaid",
+      payment_channel: "crypto",
+    });
   });
 });

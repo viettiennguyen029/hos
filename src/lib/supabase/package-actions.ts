@@ -6,6 +6,10 @@ import { assertKycVerified } from "@/lib/supabase/kyc";
 import { hasEndTimePassed } from "@/lib/booking-time";
 import { timeRangesOverlap } from "@/lib/time-overlap";
 import type { PaymentMethod } from "@/lib/supabase/types";
+import { depositEscrow, registerEscrowBooking, releaseEscrowToTalent } from "@/lib/chain/escrow";
+import { bookingIdToBytes32, getSettlementTokenAddress, vndToTokenAmount } from "@/lib/chain/escrow-config";
+import { provisionWalletForUser } from "@/lib/wallet/provision";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function createPackage(
   formData: FormData
@@ -244,7 +248,7 @@ export async function checkoutCart(
   const kycError = await assertKycVerified(supabase, user.id);
   if (kycError) return kycError;
 
-  const paymentMethod = String(formData.get("paymentMethod") ?? "Prepaid");
+  const paymentChannel = String(formData.get("paymentChannel") ?? "fiat") as "fiat" | "crypto";
   const itemIds = formData.getAll("itemIds").map(String);
   if (itemIds.length === 0) return { error: "Select at least one item to check out." };
 
@@ -272,7 +276,8 @@ export async function checkoutCart(
       booked_end_time: item.booked_end_time,
       city_id: item.city_id,
       address: item.address,
-      payment_method: paymentMethod,
+      payment_method: "Prepaid",
+      payment_channel: paymentChannel,
     }))
   );
   if (insertError) return { error: insertError.message };
@@ -298,12 +303,15 @@ async function actorRoleFor(
       talentOfferVnd: number;
       organizerOfferVnd: number;
       paymentMethod: PaymentMethod;
+      organizerId: string;
+      talentId: string;
+      paymentChannel: "fiat" | "crypto" | null;
     }
 > {
   const { data: booking } = await supabase
     .from("package_bookings")
     .select(
-      "organizer_id, awaiting_response_from, talent_offer_vnd, organizer_offer_vnd, payment_method, package:packages(talent_id)"
+      "organizer_id, awaiting_response_from, talent_offer_vnd, organizer_offer_vnd, payment_method, payment_channel, package:packages(talent_id)"
     )
     .eq("id", bookingId)
     .single();
@@ -319,6 +327,9 @@ async function actorRoleFor(
     talentOfferVnd: booking.talent_offer_vnd,
     organizerOfferVnd: booking.organizer_offer_vnd,
     paymentMethod: booking.payment_method,
+    organizerId: booking.organizer_id,
+    talentId: packageTalentId as string,
+    paymentChannel: booking.payment_channel,
   };
 }
 
@@ -349,6 +360,42 @@ export async function confirmBookingOffer(
     .update({ status: "confirmed", price_vnd: agreedPrice, awaiting_response_from: null, payment_status: paymentStatus })
     .eq("id", bookingId);
   if (error) return { error: error.message };
+
+  if (actor.paymentChannel === "crypto") {
+    // Best-effort, matching the signup wallet-provisioning pattern: the
+    // booking is already confirmed at this point, and this can be
+    // retried/resolved manually if it fails, so a failure here shouldn't
+    // block the confirmation itself.
+    try {
+      const service = createServiceClient();
+      const escrowBookingId = bookingIdToBytes32(bookingId);
+      // Persist before the on-chain call so the indexer can already resolve
+      // the BookingRegistered event it's about to see, even if its next poll
+      // lands in the gap between the tx confirming and this function returning.
+      const { error: escrowIdError } = await service
+        .from("package_bookings")
+        .update({ escrow_booking_id: escrowBookingId })
+        .eq("id", bookingId);
+      if (escrowIdError) throw escrowIdError;
+
+      const [{ address: organizerAddress }, { address: talentAddress }, { data: talentProfile }] = await Promise.all([
+        provisionWalletForUser(service, actor.organizerId),
+        provisionWalletForUser(service, actor.talentId),
+        service.from("profiles").select("commission_bps").eq("id", actor.talentId).single(),
+      ]);
+      await registerEscrowBooking(service, {
+        bookingId: escrowBookingId,
+        organizerAddress: organizerAddress as `0x${string}`,
+        talentAddress: talentAddress as `0x${string}`,
+        tokenAddress: getSettlementTokenAddress(),
+        amount: vndToTokenAmount(agreedPrice),
+        feeBps: talentProfile?.commission_bps ?? 1000,
+      });
+    } catch (registerError) {
+      console.error(`[confirmBookingOffer] escrow registration failed for booking ${bookingId}:`, registerError);
+    }
+  }
+
   return { success: true };
 }
 
@@ -364,7 +411,7 @@ export async function markBookingPaid(bookingId: string): Promise<{ error: strin
 
   const { data: booking } = await supabase
     .from("package_bookings")
-    .select("organizer_id, status, payment_method, payment_status")
+    .select("organizer_id, status, payment_method, payment_status, payment_channel")
     .eq("id", bookingId)
     .single();
   if (!booking) return { error: "Booking not found." };
@@ -373,6 +420,9 @@ export async function markBookingPaid(bookingId: string): Promise<{ error: strin
     return { error: "This booking isn't confirmed yet." };
   }
   if (booking.payment_method !== "Prepaid") return { error: "This booking doesn't require prepayment." };
+  if (booking.payment_channel === "crypto") {
+    return { error: "This booking uses crypto escrow — use the Deposit action instead." };
+  }
   if (booking.payment_status === "complete") return { success: true };
 
   const { error } = await supabase
@@ -381,6 +431,64 @@ export async function markBookingPaid(bookingId: string): Promise<{ error: strin
     .eq("id", bookingId);
   if (error) return { error: error.message };
   return { success: true };
+}
+
+/** Organizer deposits a crypto-channel booking's escrow -- relayed, gas-sponsored. */
+export async function depositBookingEscrow(bookingId: string): Promise<{ error: string } | { success: true }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+
+  const { data: booking } = await supabase
+    .from("package_bookings")
+    .select("organizer_id, escrow_booking_id, escrow_state, price_vnd")
+    .eq("id", bookingId)
+    .single();
+  if (!booking) return { error: "Booking not found." };
+  if (booking.organizer_id !== user.id) return { error: "Only the organizer can deposit for this booking." };
+  if (booking.escrow_state !== "registered") return { error: "This booking isn't ready for deposit." };
+
+  const service = createServiceClient();
+  try {
+    await depositEscrow(service, user.id, {
+      bookingId: booking.escrow_booking_id as `0x${string}`,
+      tokenAddress: getSettlementTokenAddress(),
+      organizerAddress: (await provisionWalletForUser(service, user.id)).address as `0x${string}`,
+      amount: vndToTokenAmount(booking.price_vnd),
+    });
+  } catch (depositError) {
+    return { error: depositError instanceof Error ? depositError.message : "Deposit failed." };
+  }
+
+  return { success: true };
+}
+
+/** The organizer's own view of who they're paying, before confirming an on-chain release. Never exposes anything but the public address. */
+export async function getTalentWalletForBooking(
+  bookingId: string
+): Promise<{ address: `0x${string}`; chain: string } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+
+  const actor = await actorRoleFor(supabase, bookingId, user.id);
+  if ("error" in actor) return actor;
+  if (actor.role !== "organizer") return { error: "Only the organizer can view this." };
+
+  const service = createServiceClient();
+  const { data: wallet, error } = await service
+    .from("wallets")
+    .select("address, chain")
+    .eq("user_id", actor.talentId)
+    .eq("chain", "avalanche")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  if (!wallet) return { error: "Talent has no wallet on file." };
+  return { address: wallet.address as `0x${string}`, chain: wallet.chain };
 }
 
 /** Talent flags that the event happened -- proof + a reminder notification, no status change. */
@@ -426,7 +534,7 @@ export async function organizerMarkComplete(bookingId: string): Promise<{ error:
 
   const { data: booking } = await supabase
     .from("package_bookings")
-    .select("organizer_id, status, booked_date, booked_end_time")
+    .select("organizer_id, status, booked_date, booked_end_time, payment_channel, escrow_state, escrow_booking_id")
     .eq("id", bookingId)
     .single();
   if (!booking) return { error: "Booking not found." };
@@ -438,6 +546,15 @@ export async function organizerMarkComplete(bookingId: string): Promise<{ error:
 
   const { error } = await supabase.from("package_bookings").update({ status: "completed" }).eq("id", bookingId);
   if (error) return { error: error.message };
+
+  if (booking.payment_channel === "crypto" && booking.escrow_state === "funded") {
+    try {
+      await releaseEscrowToTalent(createServiceClient(), user.id, booking.escrow_booking_id as `0x${string}`);
+    } catch (releaseError) {
+      console.error(`[organizerMarkComplete] escrow release failed for booking ${bookingId}:`, releaseError);
+    }
+  }
+
   return { success: true };
 }
 
