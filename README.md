@@ -1,4 +1,4 @@
-# HOS — Heart of Show
+# HOS — Heart of Stars
 
 A booking marketplace for live entertainment, where organizers hire talent and
 agencies for events, and **Prepaid bookings are settled through an on-chain
@@ -7,17 +7,15 @@ contract from deposit until the show resolves, and users never touch a wallet
 app, hold gas, or manage keys — the platform custodies wallets and sponsors
 every transaction fee.
 
-> Built for the hackathon bootcamp.
-
 ## What it does
 
 Three self-service roles, each with its own route tree and dashboard:
 
-| Role | Does |
-| --- | --- |
-| **Organizer** | Posts events, discovers talent, books packages, deposits & releases escrow |
-| **Talent** | Publishes packages, manages schedule/availability, gets paid on show completion |
-| **Agency** | Represents multiple talents, same booking surface as talent |
+| Role          | Does                                                                            |
+| ------------- | ------------------------------------------------------------------------------- |
+| **Organizer** | Posts events, discovers talent, books packages, deposits & releases escrow      |
+| **Talent**    | Publishes packages, manages schedule/availability, gets paid on show completion |
+| **Agency**    | Represents multiple talents, same booking surface as talent                     |
 
 Plus an **admin** surface (allowlist-based, not a marketplace role) for dispute
 resolution and per-talent commission-rate management.
@@ -83,14 +81,14 @@ defaults.
 
 ## Commands
 
-| Task | Command |
-| --- | --- |
-| Dev server | `bun run dev` |
-| Build | `bun run build` |
-| Lint | `bun run lint` |
-| Test (all) | `bun run test` |
-| Test (one file) | `bun test --isolate path/to/file.test.ts` |
-| Provision platform wallets | `bun run provision-wallets` |
+| Task                       | Command                                   |
+| -------------------------- | ----------------------------------------- |
+| Dev server                 | `bun run dev`                             |
+| Build                      | `bun run build`                           |
+| Lint                       | `bun run lint`                            |
+| Test (all)                 | `bun run test`                            |
+| Test (one file)            | `bun test --isolate path/to/file.test.ts` |
+| Provision platform wallets | `bun run provision-wallets`               |
 
 ### Contracts (`contracts/`)
 
