@@ -39,7 +39,7 @@ export function CartButton({ role, cartItems = [] }: { role: Role; cartItems?: C
         <button
           type="button"
           aria-label="Cart"
-          className="relative flex size-[46px] shrink-0 items-center justify-center rounded-full bg-white/5 transition-colors hover:bg-white/10"
+          className="relative flex size-[46px] shrink-0 items-center justify-center rounded-full bg-muted transition-colors hover:bg-accent"
         >
           <ShoppingCart className="size-[22px] text-foreground" />
           {count > 0 && (
@@ -59,7 +59,7 @@ export function CartButton({ role, cartItems = [] }: { role: Role; cartItems?: C
               return (
                 <div key={group.talentName} className="flex flex-col gap-2 p-4">
                   <div className="flex items-center gap-3">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-foreground">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                       <User className="size-4" />
                     </span>
                     <span className="flex-1 text-sm font-semibold text-foreground">

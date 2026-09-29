@@ -30,7 +30,7 @@ export function CommissionRow({
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-md bg-white/5 p-4">
+    <div className="flex items-center justify-between gap-4 rounded-md bg-muted p-4">
       <span className="text-sm font-semibold text-foreground">{fullName}</span>
       <div className="flex items-center gap-2">
         <Input

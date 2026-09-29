@@ -8,7 +8,7 @@ export function StepIndicator({ steps, activeIndex }: { steps: string[]; activeI
           <div
             className={cn(
               "flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-              i <= activeIndex ? "bg-primary text-primary-foreground" : "bg-white/10 text-muted-foreground"
+              i <= activeIndex ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             )}
           >
             {i + 1}

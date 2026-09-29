@@ -119,7 +119,7 @@ export function BookingPanel({
   }
 
   return (
-    <aside className="flex h-fit w-[380px] shrink-0 flex-col gap-5 rounded-md bg-white/5 p-6">
+    <aside className="flex h-fit w-[380px] shrink-0 flex-col gap-5 rounded-md border border-border bg-card p-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-bold tracking-[-0.03em] text-foreground">
           {talentName}&rsquo;s Performance Packages
@@ -148,7 +148,7 @@ export function BookingPanel({
                 key={pkg.id}
                 htmlFor={`package-${pkg.id}`}
                 className={cn(
-                  "flex cursor-pointer items-start gap-3 rounded-[8px] border border-transparent bg-white/5 p-4 transition-colors",
+                  "flex cursor-pointer items-start gap-3 rounded-[8px] border border-transparent bg-muted p-4 transition-colors",
                   selectedPackage === i && "border-primary bg-primary/5"
                 )}
               >
@@ -156,7 +156,7 @@ export function BookingPanel({
                 <div className="flex flex-col gap-1.5">
                   <span className="text-sm font-medium text-foreground">{pkg.title}</span>
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="rounded-full bg-white/10 px-2 py-1 text-muted-foreground">LOCATION</span>
+                    <span className="rounded-full bg-muted px-2 py-1 text-muted-foreground">LOCATION</span>
                     <span className="font-medium text-foreground">{pkg.city_name}</span>
                   </div>
                 </div>

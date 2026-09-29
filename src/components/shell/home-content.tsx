@@ -34,7 +34,7 @@ export async function HomeContent({ role }: { role: Role }) {
   return (
     <div className="flex flex-col gap-14 py-8">
       {mostPopular.length > 0 && (
-        <CardCarousel title="Most Popular Talents in Heart of Show" viewAllHref={`/${role}/discover`}>
+        <CardCarousel title="Most Popular Talents on Hustle of Stars" viewAllHref={`/${role}/discover`}>
           {mostPopular.map((pkg) => (
             <ListingCard key={pkg.id} data={toCardData(pkg)} href={`/${role}/talents/${pkg.talent_slug}`} />
           ))}

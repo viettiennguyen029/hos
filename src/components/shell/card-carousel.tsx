@@ -26,7 +26,7 @@ export function CardCarousel({ title, viewAllHref, children }: CardCarouselProps
             type="button"
             aria-label="Scroll back"
             onClick={() => scrollByAmount(-1)}
-            className="flex size-8 items-center justify-center rounded-full bg-white/5 text-foreground transition-colors hover:bg-white/10"
+            className="flex size-8 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-accent"
           >
             <ChevronLeft className="size-4" />
           </button>
@@ -34,7 +34,7 @@ export function CardCarousel({ title, viewAllHref, children }: CardCarouselProps
             type="button"
             aria-label="Scroll forward"
             onClick={() => scrollByAmount(1)}
-            className="flex size-8 items-center justify-center rounded-full bg-white/5 text-foreground transition-colors hover:bg-white/10"
+            className="flex size-8 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-accent"
           >
             <ChevronRight className="size-4" />
           </button>

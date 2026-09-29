@@ -151,7 +151,7 @@ export function PackagesContent({
 
       {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
 
-      <div className="overflow-hidden rounded-md bg-white/5">
+      <div className="overflow-hidden rounded-md bg-muted">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -177,7 +177,7 @@ export function PackagesContent({
                       type="button"
                       disabled={!packageById.has(pkg.id)}
                       onClick={() => setEditingPackage(packageById.get(pkg.id) ?? null)}
-                      className="flex size-8 items-center justify-center rounded-full bg-white/5 text-muted-foreground hover:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
+                      className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
                     >
                       <Pencil className="size-3.5" />
                     </button>
@@ -186,7 +186,7 @@ export function PackagesContent({
                       aria-label="Delete package"
                       disabled={!packageById.has(pkg.id) || deletingId === pkg.id}
                       onClick={() => handleDelete(pkg.id)}
-                      className="flex size-8 items-center justify-center rounded-full bg-white/5 text-muted-foreground hover:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
+                      className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
                     >
                       <Trash2 className="size-3.5" />
                     </button>

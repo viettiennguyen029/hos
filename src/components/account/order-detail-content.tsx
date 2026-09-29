@@ -135,7 +135,7 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <div className="flex flex-col gap-5 rounded-md bg-white/5 p-6">
+      <div className="flex flex-col gap-5 rounded-md bg-muted p-6">
         <h2 className="text-lg font-bold text-foreground">Booking Information</h2>
 
         <div className="grid grid-cols-2 gap-4">
@@ -165,7 +165,7 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 rounded-[8px] bg-white/5 p-4 text-sm">
+        <div className="flex flex-col gap-2 rounded-[8px] bg-muted p-4 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Talent Offer</span>
             <span className="font-medium text-foreground">{formatVnd(booking.talent_offer_vnd)}</span>
@@ -313,7 +313,7 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
         )}
       </div>
 
-      <div className="flex flex-col gap-5 rounded-md bg-white/5 p-6">
+      <div className="flex flex-col gap-5 rounded-md bg-muted p-6">
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-bold text-foreground">Booking Detail</h2>
           <span className="text-xl font-bold text-foreground">{booking.package_title}</span>
@@ -371,7 +371,7 @@ export function OrderDetailContent({ role, booking }: { role: Role; booking: Boo
               {booking.package_skill_tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-foreground"
+                  className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground"
                 >
                   {tag}
                 </span>
@@ -433,7 +433,7 @@ function PaymentDialog({
 }) {
   const transferNote = `HOS${bookingId.slice(0, 8).toUpperCase()}`;
   const bankAccountNumber = "0000111222333";
-  const bankName = "Heart of Show Bank";
+  const bankName = "Hustle of Stars Bank";
   const qrValue = `Bank: ${bankName}\nAccount: ${bankAccountNumber}\nAmount: ${amountVnd}\nNote: ${transferNote}`;
 
   return (
@@ -447,15 +447,15 @@ function PaymentDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2 text-sm">
-          <div className="flex items-center justify-between rounded-[8px] bg-white/5 p-3">
+          <div className="flex items-center justify-between rounded-[8px] bg-muted p-3">
             <span className="text-muted-foreground">Account number</span>
             <span className="font-semibold text-foreground">{bankAccountNumber}</span>
           </div>
-          <div className="flex items-center justify-between rounded-[8px] bg-white/5 p-3">
+          <div className="flex items-center justify-between rounded-[8px] bg-muted p-3">
             <span className="text-muted-foreground">Bank name</span>
             <span className="font-semibold text-foreground">{bankName}</span>
           </div>
-          <div className="flex items-center justify-between rounded-[8px] bg-white/5 p-3">
+          <div className="flex items-center justify-between rounded-[8px] bg-muted p-3">
             <span className="text-muted-foreground">Transfer note</span>
             <span className="font-semibold text-foreground">{transferNote}</span>
           </div>
@@ -513,15 +513,15 @@ function ReleaseDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2 text-sm">
-          <div className="flex items-center justify-between rounded-[8px] bg-white/5 p-3">
+          <div className="flex items-center justify-between rounded-[8px] bg-muted p-3">
             <span className="text-muted-foreground">Talent</span>
             <span className="font-semibold text-foreground">{talentName}</span>
           </div>
-          <div className="flex items-center justify-between rounded-[8px] bg-white/5 p-3">
+          <div className="flex items-center justify-between rounded-[8px] bg-muted p-3">
             <span className="text-muted-foreground">Chain</span>
             <span className="font-semibold text-foreground">Avalanche</span>
           </div>
-          <div className="flex items-center justify-between rounded-[8px] bg-white/5 p-3">
+          <div className="flex items-center justify-between rounded-[8px] bg-muted p-3">
             <span className="text-muted-foreground">Wallet address</span>
             <span className="break-all font-semibold text-foreground">
               {wallet?.address ?? (walletError ? "Unavailable" : "Loading...")}

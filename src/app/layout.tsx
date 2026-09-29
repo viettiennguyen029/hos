@@ -10,8 +10,8 @@ const beVietnamPro = Be_Vietnam_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "HOS",
-  description: "Heart of Show",
+  title: "Hustle of Stars",
+  description: "Turn your talent into extra income",
 };
 
 export default function RootLayout({
@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${beVietnamPro.variable} h-full antialiased`}
+      className={`${beVietnamPro.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

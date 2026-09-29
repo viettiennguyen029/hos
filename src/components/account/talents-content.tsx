@@ -24,7 +24,7 @@ export function TalentsContent() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-md bg-white/5">
+      <div className="overflow-hidden rounded-md bg-muted">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -38,7 +38,7 @@ export function TalentsContent() {
               <TableRow key={talent.id} className="hover:bg-transparent">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-foreground">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                       <User className="size-4" />
                     </span>
                     <span className="font-medium text-foreground">{talent.name}</span>

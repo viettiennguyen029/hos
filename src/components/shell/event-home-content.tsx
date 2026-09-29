@@ -13,7 +13,7 @@ export async function EventHomeContent({ role }: { role: Role }) {
 
   return (
     <div className="flex flex-col gap-14 py-8">
-      <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-md bg-white/10 text-muted-foreground">
+      <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
         <ImageIcon className="size-10" />
       </div>
 

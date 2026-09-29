@@ -6,7 +6,7 @@ export function SearchBar({ className, placeholder, ...props }: ComponentProps<"
   return (
     <div
       className={cn(
-        "flex w-full max-w-[636px] items-center gap-3.5 rounded-full border border-[rgba(255,255,255,0.15)] px-5 py-3.5",
+        "flex w-full max-w-[636px] items-center gap-3.5 rounded-full border border-border px-5 py-3.5",
         className
       )}
     >

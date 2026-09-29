@@ -36,7 +36,7 @@ export function UploadSlot({
             "relative flex size-full flex-col items-center justify-center gap-2 overflow-hidden rounded-[8px] border border-dashed text-muted-foreground transition-colors",
             filled
               ? "border-primary bg-primary/5 text-foreground"
-              : "border-white/15 bg-white/5 hover:bg-white/10"
+              : "border-border bg-muted hover:bg-accent"
           )}
         >
           {previewUrl && (

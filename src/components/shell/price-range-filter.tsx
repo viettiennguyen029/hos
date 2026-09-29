@@ -25,7 +25,7 @@ export function PriceRangeFilter({
 
   return (
     <Popover>
-      <PopoverTrigger className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/5 px-4 py-2.5 text-sm text-foreground outline-none transition-colors hover:bg-white/10">
+      <PopoverTrigger className="flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-4 py-2.5 text-sm text-foreground outline-none transition-colors hover:bg-accent">
         <span className="text-muted-foreground">Price Range</span>
         <span className="font-medium">{label}</span>
         <ChevronDown className="size-3.5 text-muted-foreground" />

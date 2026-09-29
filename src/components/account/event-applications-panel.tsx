@@ -12,7 +12,7 @@ import { runAction } from "@/lib/toast-action";
 const statusStyles: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-500",
   accepted: "bg-green-500/10 text-green-500",
-  rejected: "bg-white/10 text-muted-foreground",
+  rejected: "bg-muted text-muted-foreground",
 };
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -66,7 +66,7 @@ export function EventApplicationsPanel({
           {applications.map((app) => (
             <div
               key={app.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-[8px] bg-white/5 p-3"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-[8px] bg-muted p-3"
             >
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-foreground">{app.applicant_name}</span>
@@ -85,7 +85,7 @@ export function EventApplicationsPanel({
                       type="button"
                       disabled={pendingId === app.id}
                       onClick={() => handle("reject", app.id)}
-                      className="rounded-[6px] bg-white/5 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white/10"
+                      className="rounded-[6px] bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
                     >
                       Reject
                     </button>
@@ -105,7 +105,7 @@ export function EventApplicationsPanel({
                     <button
                       type="button"
                       onClick={() => setReviewTarget({ id: app.id, talentName: app.applicant_name })}
-                      className="rounded-[6px] bg-white/5 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white/10"
+                      className="rounded-[6px] bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
                     >
                       Leave a Review
                     </button>

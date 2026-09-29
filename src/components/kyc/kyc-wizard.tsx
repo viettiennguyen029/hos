@@ -140,7 +140,7 @@ export function KycWizard({ role }: { role: Role }) {
   if (submitted) {
     return (
       <div className="flex flex-1 items-center justify-center py-24">
-        <div className="flex w-full max-w-[460px] flex-col items-center gap-5 rounded-md bg-white/5 p-10 text-center">
+        <div className="flex w-full max-w-[460px] flex-col items-center gap-5 rounded-md bg-muted p-10 text-center">
           <Clock className="size-12 text-amber-500" />
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-bold tracking-[-0.03em] text-foreground">
@@ -177,7 +177,7 @@ export function KycWizard({ role }: { role: Role }) {
 
       <StepIndicator steps={steps} activeIndex={stepIndex} />
 
-      <div className="max-w-[640px] rounded-md bg-white/5 p-8">
+      <div className="max-w-[640px] rounded-md bg-muted p-8">
         {!isBusiness && currentStep === "Personal Info" && (
           <form
             onSubmit={(e) => {
@@ -305,7 +305,7 @@ export function KycWizard({ role }: { role: Role }) {
           >
             <Field
               label="Company Name"
-              placeholder="Heart of Show Agency Co., Ltd"
+              placeholder="Hustle of Stars Agency Co., Ltd"
               value={values.companyName}
               onChange={set("companyName")}
               required
@@ -387,7 +387,7 @@ export function KycWizard({ role }: { role: Role }) {
         {currentStep === "Review & Submit" && (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <h2 className="text-lg font-semibold text-foreground">Review & Submit</h2>
-            <div className="flex flex-col gap-2 rounded-[8px] bg-white/5 p-4 text-sm">
+            <div className="flex flex-col gap-2 rounded-[8px] bg-muted p-4 text-sm">
               {isBusiness ? (
                 <>
                   <div className="flex justify-between">

@@ -1,4 +1,4 @@
-# HOS — Heart of Stars
+# HOS — Hustle of Stars
 
 A booking marketplace for live entertainment, where organizers hire talent and
 agencies for events, and **Prepaid bookings are settled through an on-chain
