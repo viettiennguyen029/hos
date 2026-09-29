@@ -87,11 +87,11 @@ export function ApplyDialog({
                         type="button"
                         onClick={() => setSelectedTalentId(talent.id)}
                         className={cn(
-                          "flex items-center gap-2.5 rounded-[8px] border border-transparent bg-white/5 p-3 text-left transition-colors",
+                          "flex items-center gap-2.5 rounded-[8px] border border-transparent bg-muted p-3 text-left transition-colors",
                           selectedTalentId === talent.id && "border-primary bg-primary/5"
                         )}
                       >
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-foreground">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                           <User className="size-4" />
                         </span>
                         <span className="flex flex-col">
@@ -125,8 +125,8 @@ export function ApplyDialog({
             </DialogHeader>
 
             {isAgency && selectedTalent && (
-              <div className="flex items-center gap-3 rounded-[8px] bg-white/5 p-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-foreground">
+              <div className="flex items-center gap-3 rounded-[8px] bg-muted p-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                   <User className="size-4" />
                 </span>
                 <span className="flex flex-col">
@@ -136,7 +136,7 @@ export function ApplyDialog({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3 rounded-[8px] bg-white/5 p-3 text-sm">
+            <div className="grid grid-cols-2 gap-3 rounded-[8px] bg-muted p-3 text-sm">
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-muted-foreground uppercase">Date</span>
                 <span className="font-medium text-foreground">{formatEventDay(event.event_date)}</span>
@@ -157,7 +157,7 @@ export function ApplyDialog({
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 rounded-[8px] bg-white/5 p-3 text-sm">
+            <div className="flex flex-col gap-2 rounded-[8px] bg-muted p-3 text-sm">
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-muted-foreground uppercase">Location</span>
                 <span className="font-medium text-foreground">
@@ -173,7 +173,7 @@ export function ApplyDialog({
             </div>
 
             {event.description && (
-              <p className="rounded-[8px] bg-white/5 p-3 text-xs text-muted-foreground">
+              <p className="rounded-[8px] bg-muted p-3 text-xs text-muted-foreground">
                 {event.description}
               </p>
             )}

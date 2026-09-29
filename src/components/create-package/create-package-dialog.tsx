@@ -162,11 +162,11 @@ export function CreatePackageDialog({
                         type="button"
                         onClick={() => setSelectedTalentId(talent.id)}
                         className={cn(
-                          "flex items-center gap-2.5 rounded-[8px] border border-transparent bg-white/5 p-3 text-left transition-colors",
+                          "flex items-center gap-2.5 rounded-[8px] border border-transparent bg-muted p-3 text-left transition-colors",
                           selectedTalentId === talent.id && "border-primary bg-primary/5"
                         )}
                       >
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-foreground">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                           <User className="size-4" />
                         </span>
                         <span className="flex flex-col">
@@ -198,8 +198,8 @@ export function CreatePackageDialog({
             </DialogHeader>
 
             {isAgency && selectedTalent && (
-              <div className="flex items-center gap-3 rounded-[8px] bg-white/5 p-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-foreground">
+              <div className="flex items-center gap-3 rounded-[8px] bg-muted p-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                   <User className="size-4" />
                 </span>
                 <span className="flex flex-col">
@@ -247,7 +247,7 @@ export function CreatePackageDialog({
               {isAgency ? (
                 <SelectField label="One-time" name="oneTime" options={["One-time", "Repeat"]} />
               ) : (
-                <div className="flex flex-col gap-3 rounded-[8px] bg-white/5 p-3">
+                <div className="flex flex-col gap-3 rounded-[8px] bg-muted p-3">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="repeat-on" className="text-sm text-foreground">
                       Repeat On
@@ -265,7 +265,7 @@ export function CreatePackageDialog({
                             "rounded-[6px] px-3 py-2 text-xs font-medium transition-colors",
                             selectedDays.includes(day)
                               ? "bg-foreground text-background"
-                              : "bg-white/5 text-muted-foreground"
+                              : "bg-muted text-muted-foreground"
                           )}
                         >
                           {day}
@@ -330,14 +330,14 @@ export function CreatePackageDialog({
                       type="button"
                       onClick={() => setPaymentMethod(method)}
                       className={cn(
-                        "flex items-center gap-2 rounded-[8px] border border-transparent bg-white/5 px-4 py-3 text-sm font-medium text-foreground transition-colors",
+                        "flex items-center gap-2 rounded-[8px] border border-transparent bg-muted px-4 py-3 text-sm font-medium text-foreground transition-colors",
                         paymentMethod === method && "border-primary bg-primary/5"
                       )}
                     >
                       <span
                         className={cn(
                           "flex size-4 shrink-0 items-center justify-center rounded-full border",
-                          paymentMethod === method ? "border-primary" : "border-white/30"
+                          paymentMethod === method ? "border-primary" : "border-border"
                         )}
                       >
                         {paymentMethod === method && (

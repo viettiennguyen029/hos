@@ -24,7 +24,7 @@ export function ApplyPanel({ event, role }: { event: EventWithSlots; role: Role 
   const hasSlots = event.slots.length > 0;
 
   return (
-    <aside className="flex h-fit w-[380px] shrink-0 flex-col gap-5 rounded-md bg-white/5 p-6">
+    <aside className="flex h-fit w-[380px] shrink-0 flex-col gap-5 rounded-md bg-muted p-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-bold tracking-[-0.03em] text-foreground">
           {`${event.name} Event's Available Slot`}
@@ -52,7 +52,7 @@ export function ApplyPanel({ event, role }: { event: EventWithSlots; role: Role 
               key={slot.id}
               htmlFor={`slot-${slot.id}`}
               className={cn(
-                "flex cursor-pointer items-start justify-between gap-3 rounded-[8px] border border-transparent bg-white/5 p-4 transition-colors",
+                "flex cursor-pointer items-start justify-between gap-3 rounded-[8px] border border-transparent bg-muted p-4 transition-colors",
                 selectedSlot === i && "border-primary bg-primary/5"
               )}
             >
@@ -61,9 +61,9 @@ export function ApplyPanel({ event, role }: { event: EventWithSlots; role: Role 
                 <div className="flex flex-col gap-1.5">
                   <span className="text-sm font-medium text-foreground">{slot.category_name}</span>
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="rounded-full bg-white/10 px-2 py-1 text-muted-foreground">TYPE</span>
+                    <span className="rounded-full bg-muted px-2 py-1 text-muted-foreground">TYPE</span>
                     <span className="text-foreground">{slot.slot_type}</span>
-                    <span className="rounded-full bg-white/10 px-2 py-1 text-muted-foreground">
+                    <span className="rounded-full bg-muted px-2 py-1 text-muted-foreground">
                       QUANTITY
                     </span>
                     <span className="font-medium text-foreground">{slot.quantity_total} slots</span>

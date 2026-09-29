@@ -11,7 +11,7 @@ function StarRow({ count, size = "size-4" }: { count: number; size?: string }) {
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
-          className={cn(size, i < count ? "fill-primary text-primary" : "text-white/20")}
+          className={cn(size, i < count ? "fill-primary text-primary" : "text-muted-foreground")}
         />
       ))}
     </div>
@@ -36,7 +36,7 @@ export function RatingReviewCard({
 
   if (count === 0) {
     return (
-      <div className="flex flex-col items-center gap-1 rounded-md bg-white/5 p-6 text-center">
+      <div className="flex flex-col items-center gap-1 rounded-md bg-muted p-6 text-center">
         <span className="text-sm font-medium text-foreground">No reviews yet</span>
         <span className="text-xs text-muted-foreground">
           Reviews appear here once an organizer rates a completed booking.
@@ -52,8 +52,8 @@ export function RatingReviewCard({
   }
 
   return (
-    <div className="grid grid-cols-[auto_1fr] gap-6 rounded-md bg-white/5 p-6">
-      <div className="flex w-[160px] flex-col items-center justify-center gap-2 rounded-[8px] bg-white/5 px-6 py-4 text-center">
+    <div className="grid grid-cols-[auto_1fr] gap-6 rounded-md bg-muted p-6">
+      <div className="flex w-[160px] flex-col items-center justify-center gap-2 rounded-[8px] bg-muted px-6 py-4 text-center">
         <span className="text-5xl font-bold text-foreground">{avgRating?.toFixed(1)}</span>
         <StarRow count={Math.round(avgRating ?? 0)} />
         <span className="text-sm text-muted-foreground">{count} review{count === 1 ? "" : "s"}</span>
@@ -62,7 +62,7 @@ export function RatingReviewCard({
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-foreground">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
               {review.reviewer_name
                 .split(" ")
                 .map((w) => w[0])
@@ -80,7 +80,7 @@ export function RatingReviewCard({
                 type="button"
                 aria-label="Previous review"
                 onClick={() => go(-1)}
-                className="flex size-7 items-center justify-center rounded-full bg-white/5 text-foreground hover:bg-white/10"
+                className="flex size-7 items-center justify-center rounded-full bg-muted text-foreground hover:bg-accent"
               >
                 <ChevronLeft className="size-4" />
               </button>
@@ -88,7 +88,7 @@ export function RatingReviewCard({
                 type="button"
                 aria-label="Next review"
                 onClick={() => go(1)}
-                className="flex size-7 items-center justify-center rounded-full bg-white/5 text-foreground hover:bg-white/10"
+                className="flex size-7 items-center justify-center rounded-full bg-muted text-foreground hover:bg-accent"
               >
                 <ChevronRight className="size-4" />
               </button>

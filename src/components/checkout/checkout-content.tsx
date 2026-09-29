@@ -82,7 +82,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
   if (sent) {
     return (
       <div className="flex flex-1 items-center justify-center py-24">
-        <div className="flex w-full max-w-[460px] flex-col items-center gap-5 rounded-md bg-white/5 p-10 text-center">
+        <div className="flex w-full max-w-[460px] flex-col items-center gap-5 rounded-md bg-muted p-10 text-center">
           <CheckCircle2 className="size-12 text-green-500" />
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-bold tracking-[-0.03em] text-foreground">
@@ -117,7 +117,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
       </div>
 
       <div className="flex gap-8">
-        <div className="flex min-w-0 flex-1 flex-col divide-y divide-border rounded-md bg-white/5">
+        <div className="flex min-w-0 flex-1 flex-col divide-y divide-border rounded-md bg-muted">
           {groups.map((group) => {
             const groupItemIds = group.items.map((i) => i.id);
             const checkedCount = groupItemIds.filter((id) => checked[id]).length;
@@ -131,7 +131,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
                     checked={groupChecked}
                     onCheckedChange={(v) => toggleGroup(groupItemIds, v === true)}
                   />
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-foreground">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                     <User className="size-4" />
                   </div>
                   <span className="flex-1 text-base font-semibold text-foreground">
@@ -155,10 +155,10 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
                           <span className="text-foreground">{item.package.city_name}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="rounded-full bg-white/5 px-4 py-2 text-sm text-foreground">
+                          <span className="rounded-full bg-muted px-4 py-2 text-sm text-foreground">
                             {item.booked_date ?? "Choose Date"}
                           </span>
-                          <span className="rounded-full bg-white/5 px-4 py-2 text-sm text-foreground">
+                          <span className="rounded-full bg-muted px-4 py-2 text-sm text-foreground">
                             {item.booked_time ?? "Choose Time"}
                           </span>
                           <span className="w-[160px] shrink-0 text-right text-sm font-semibold text-foreground">
@@ -171,7 +171,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
                       type="button"
                       aria-label="Remove item"
                       onClick={() => handleRemove(item.id)}
-                      className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-muted-foreground hover:bg-white/10"
+                      className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
                     >
                       <X className="size-3.5" />
                     </button>
@@ -182,7 +182,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
           })}
         </div>
 
-        <aside className="flex h-fit w-[400px] shrink-0 flex-col gap-5 rounded-md bg-white/5 p-6">
+        <aside className="flex h-fit w-[400px] shrink-0 flex-col gap-5 rounded-md bg-muted p-6">
           <div className="flex flex-col gap-3">
             <h2 className="text-lg font-bold tracking-[-0.03em] text-foreground">Payment Method</h2>
             <div className="grid grid-cols-2 gap-3">
@@ -198,7 +198,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
                   disabled={disabled}
                   onClick={() => setPaymentChannel(value)}
                   className={cn(
-                    "flex items-center gap-2 rounded-[8px] border border-transparent bg-white/5 px-4 py-3 text-sm font-medium text-foreground transition-colors",
+                    "flex items-center gap-2 rounded-[8px] border border-transparent bg-muted px-4 py-3 text-sm font-medium text-foreground transition-colors",
                     paymentChannel === value && "border-primary bg-primary/5",
                     disabled && "cursor-not-allowed opacity-50"
                   )}
@@ -206,7 +206,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
                   <span
                     className={cn(
                       "flex size-4 shrink-0 items-center justify-center rounded-full border",
-                      paymentChannel === value ? "border-primary" : "border-white/30"
+                      paymentChannel === value ? "border-primary" : "border-border"
                     )}
                   >
                     {paymentChannel === value && <span className="size-2 rounded-full bg-primary" />}
@@ -224,7 +224,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
 
           <div className="flex flex-col gap-3">
             <h2 className="text-lg font-bold tracking-[-0.03em] text-foreground">Order Detail</h2>
-            <div className="flex flex-col gap-4 rounded-[8px] bg-white/5 p-5">
+            <div className="flex flex-col gap-4 rounded-[8px] bg-muted p-5">
               {groupTotals.map((group, i) => (
                 <div key={group.talentName}>
                   {i > 0 && <Separator className="mb-4" />}
