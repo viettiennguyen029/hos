@@ -117,7 +117,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
       </div>
 
       <div className="flex gap-8">
-        <div className="flex min-w-0 flex-1 flex-col divide-y divide-border rounded-md bg-muted">
+        <div className="flex min-w-0 flex-1 flex-col divide-y divide-border rounded-md border border-border bg-card">
           {groups.map((group) => {
             const groupItemIds = group.items.map((i) => i.id);
             const checkedCount = groupItemIds.filter((id) => checked[id]).length;
