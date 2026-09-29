@@ -189,14 +189,14 @@ export function ProfileContent({
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-md bg-white/5">
+      <div className="overflow-hidden rounded-md bg-muted">
         {role === "talent" && (
           <>
             <button
               type="button"
               onClick={() => coverInputRef.current?.click()}
               disabled={coverPending}
-              className="group relative flex h-[120px] w-full items-center justify-center bg-white/10 text-muted-foreground"
+              className="group relative flex h-[120px] w-full items-center justify-center bg-muted text-muted-foreground"
             >
               {coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -223,7 +223,7 @@ export function ProfileContent({
             onClick={() => avatarInputRef.current?.click()}
             disabled={avatarPending}
             className={cn(
-              "group relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-card bg-white/10 text-muted-foreground",
+              "group relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-card bg-muted text-muted-foreground",
               role === "talent" && "-mt-8"
             )}
           >
@@ -257,7 +257,7 @@ export function ProfileContent({
         </div>
       </div>
 
-      <div className="flex flex-col gap-5 rounded-md bg-white/5 p-6">
+      <div className="flex flex-col gap-5 rounded-md bg-muted p-6">
         <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
         <div className="grid grid-cols-2 gap-5">
           <Field label="Display Name" name="fullName" defaultValue={profile.full_name} required />
@@ -339,7 +339,7 @@ export function ProfileContent({
         </div>
       </div>
 
-      <div className="flex flex-col gap-5 rounded-md bg-white/5 p-6">
+      <div className="flex flex-col gap-5 rounded-md bg-muted p-6">
         <h2 className="text-lg font-semibold text-foreground">Bio</h2>
         <div className="flex flex-col gap-2">
           <Label className="text-sm text-muted-foreground">Description</Label>
@@ -349,7 +349,7 @@ export function ProfileContent({
           <Label className="text-sm text-muted-foreground">Thumbnail Image</Label>
           <div className="grid grid-cols-5 gap-3">
             {gallery.map((url) => (
-              <div key={url} className="group relative aspect-square overflow-hidden rounded-[8px] bg-white/10">
+              <div key={url} className="group relative aspect-square overflow-hidden rounded-[8px] bg-muted">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" className="size-full object-cover" />
                 <button
@@ -367,7 +367,7 @@ export function ProfileContent({
                 aria-label="Add thumbnail"
                 onClick={() => galleryInputRef.current?.click()}
                 disabled={galleryPending}
-                className="flex aspect-square items-center justify-center rounded-[8px] bg-white/10 text-muted-foreground hover:bg-white/15"
+                className="flex aspect-square items-center justify-center rounded-[8px] bg-muted text-muted-foreground hover:bg-accent"
               >
                 <ImageIcon className="size-5" />
               </button>
@@ -384,13 +384,13 @@ export function ProfileContent({
       </div>
 
       {role === "talent" && (
-        <div className="flex flex-col gap-4 rounded-md bg-white/5 p-6">
+        <div className="flex flex-col gap-4 rounded-md bg-muted p-6">
           <h2 className="text-lg font-semibold text-foreground">Keyword</h2>
           <div className="flex flex-wrap gap-2">
             {keywords.map((kw) => (
               <span
                 key={kw}
-                className="flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm text-foreground"
+                className="flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm text-foreground"
               >
                 {kw}
                 <button
@@ -419,7 +419,7 @@ export function ProfileContent({
             <button
               type="button"
               onClick={addKeyword}
-              className="flex shrink-0 items-center gap-1 rounded-[6px] bg-white/5 px-3 py-2 text-xs text-muted-foreground hover:bg-white/10"
+              className="flex shrink-0 items-center gap-1 rounded-[6px] bg-muted px-3 py-2 text-xs text-muted-foreground hover:bg-accent"
             >
               <Plus className="size-3.5" /> Add Keyword
             </button>
@@ -427,7 +427,7 @@ export function ProfileContent({
         </div>
       )}
 
-      <div className="flex flex-col gap-4 rounded-md bg-white/5 p-6">
+      <div className="flex flex-col gap-4 rounded-md bg-muted p-6">
         <h2 className="text-lg font-semibold text-foreground">Social Profile</h2>
         <div className="flex flex-col gap-3">
           {socialLinks.map((row, index) => (
@@ -464,7 +464,7 @@ export function ProfileContent({
         <button
           type="button"
           onClick={addSocialLink}
-          className="flex w-fit items-center gap-1 rounded-[6px] bg-white/5 px-3 py-2 text-xs text-muted-foreground hover:bg-white/10"
+          className="flex w-fit items-center gap-1 rounded-[6px] bg-muted px-3 py-2 text-xs text-muted-foreground hover:bg-accent"
         >
           <Plus className="size-3.5" /> Add Social Link
         </button>
@@ -472,7 +472,7 @@ export function ProfileContent({
 
       {role === "talent" && (
         <>
-          <div className="flex flex-col gap-4 rounded-md bg-white/5 p-6">
+          <div className="flex flex-col gap-4 rounded-md bg-muted p-6">
             <h2 className="text-lg font-semibold text-foreground">Services</h2>
             <div className="flex flex-col gap-3">
               {services.map((value, index) => (
@@ -496,13 +496,13 @@ export function ProfileContent({
             <button
               type="button"
               onClick={addService}
-              className="flex w-fit items-center gap-1 rounded-[6px] bg-white/5 px-3 py-2 text-xs text-muted-foreground hover:bg-white/10"
+              className="flex w-fit items-center gap-1 rounded-[6px] bg-muted px-3 py-2 text-xs text-muted-foreground hover:bg-accent"
             >
               <Plus className="size-3.5" /> Add Services
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 rounded-md bg-white/5 p-6">
+          <div className="flex flex-col gap-4 rounded-md bg-muted p-6">
             <h2 className="text-lg font-semibold text-foreground">Achievement</h2>
             <div className="flex flex-col gap-3">
               {achievements.map((row, index) => (
@@ -534,7 +534,7 @@ export function ProfileContent({
             <button
               type="button"
               onClick={addAchievement}
-              className="flex w-fit items-center gap-1 rounded-[6px] bg-white/5 px-3 py-2 text-xs text-muted-foreground hover:bg-white/10"
+              className="flex w-fit items-center gap-1 rounded-[6px] bg-muted px-3 py-2 text-xs text-muted-foreground hover:bg-accent"
             >
               <Plus className="size-3.5" /> Add Achievement
             </button>

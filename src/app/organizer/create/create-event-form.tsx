@@ -182,7 +182,7 @@ export function CreateEventForm({ categories }: { categories: CategoryOption[] }
   if (done) {
     return (
       <div className="flex flex-1 items-center justify-center py-24">
-        <div className="flex w-full max-w-[460px] flex-col items-center gap-5 rounded-md bg-white/5 p-10 text-center">
+        <div className="flex w-full max-w-[460px] flex-col items-center gap-5 rounded-md bg-muted p-10 text-center">
           <CheckCircle2 className="size-12 text-green-500" />
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-bold tracking-[-0.03em] text-foreground">
@@ -215,7 +215,7 @@ export function CreateEventForm({ categories }: { categories: CategoryOption[] }
             <div
               className={cn(
                 "flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-                i <= stepIndex ? "bg-primary text-primary-foreground" : "bg-white/10 text-muted-foreground"
+                i <= stepIndex ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               )}
             >
               {i + 1}
@@ -233,7 +233,7 @@ export function CreateEventForm({ categories }: { categories: CategoryOption[] }
         ))}
       </div>
 
-      <div className="max-w-[640px] rounded-md bg-white/5 p-8">
+      <div className="max-w-[640px] rounded-md bg-muted p-8">
         {step === "Event Details" && (
           <form
             onSubmit={(e) => {
@@ -341,7 +341,7 @@ export function CreateEventForm({ categories }: { categories: CategoryOption[] }
             <div className="flex flex-col gap-3">
               <Label className="text-sm text-muted-foreground">Talent Slots</Label>
               {slots.map((slot, i) => (
-                <div key={slot.key} className="flex items-end gap-3 rounded-[8px] bg-white/5 p-3">
+                <div key={slot.key} className="flex items-end gap-3 rounded-[8px] bg-muted p-3">
                   <div className="flex flex-1 flex-col gap-2">
                     <Label htmlFor={`slot-category-${slot.key}`} className="text-xs text-muted-foreground">
                       Category
@@ -386,7 +386,7 @@ export function CreateEventForm({ categories }: { categories: CategoryOption[] }
                     disabled={slots.length === 1}
                     onClick={() => removeSlot(slot.key)}
                     aria-label={`Remove slot ${i + 1}`}
-                    className="flex h-11 shrink-0 items-center justify-center rounded-[6px] bg-white/5 px-3 text-muted-foreground hover:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
+                    className="flex h-11 shrink-0 items-center justify-center rounded-[6px] bg-muted px-3 text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
                   >
                     <Trash2 className="size-4" />
                   </button>
@@ -395,7 +395,7 @@ export function CreateEventForm({ categories }: { categories: CategoryOption[] }
               <button
                 type="button"
                 onClick={addSlot}
-                className="flex w-fit items-center gap-1.5 rounded-[6px] bg-white/5 px-3 py-2 text-xs text-muted-foreground hover:bg-white/10"
+                className="flex w-fit items-center gap-1.5 rounded-[6px] bg-muted px-3 py-2 text-xs text-muted-foreground hover:bg-accent"
               >
                 <Plus className="size-3.5" /> Add Talent Slot
               </button>
@@ -421,7 +421,7 @@ export function CreateEventForm({ categories }: { categories: CategoryOption[] }
               />
             </div>
 
-            <div className="flex flex-col gap-1 rounded-[8px] bg-white/5 p-4 text-sm">
+            <div className="flex flex-col gap-1 rounded-[8px] bg-muted p-4 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Event</span>
                 <span className="font-medium text-foreground">{values.eventName || "Untitled Event"}</span>

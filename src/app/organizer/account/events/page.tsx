@@ -21,7 +21,7 @@ const statusLabels: Record<EventStatus, string> = {
 const statusStyles: Record<EventStatus, string> = {
   upcoming: "bg-primary/10 text-primary",
   completed: "bg-green-500/10 text-green-500",
-  cancelled: "bg-white/10 text-muted-foreground",
+  cancelled: "bg-muted text-muted-foreground",
 };
 
 function formatBudget(minVnd: number | null, maxVnd: number | null) {
@@ -60,7 +60,7 @@ export default async function OrganizerEventsPage({
         {events.map((event) => (
           <div
             key={event.id}
-            className="flex flex-col gap-3 rounded-md bg-white/5 p-5"
+            className="flex flex-col gap-3 rounded-md bg-muted p-5"
           >
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-col gap-2">

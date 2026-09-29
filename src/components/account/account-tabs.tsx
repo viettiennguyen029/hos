@@ -31,7 +31,7 @@ export function AccountTabs({ role }: { role: Role }) {
             href={item.href}
             className={cn(
               "shrink-0 rounded-[8px] px-6 py-3 text-sm font-medium tracking-[-0.03em] transition-colors",
-              active ? "bg-foreground text-background" : "bg-white/5 text-foreground hover:bg-white/10"
+              active ? "bg-foreground text-background" : "bg-muted text-foreground hover:bg-accent"
             )}
           >
             {item.label}

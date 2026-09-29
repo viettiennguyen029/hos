@@ -68,7 +68,7 @@ function PageLink({
       tabIndex={disabled ? -1 : undefined}
       className={cn(
         "flex size-8 shrink-0 items-center justify-center rounded-[6px] text-sm font-medium transition-colors",
-        current ? "bg-foreground text-background" : "bg-white/5 text-foreground hover:bg-white/10",
+        current ? "bg-foreground text-background" : "bg-muted text-foreground hover:bg-accent",
         disabled && "pointer-events-none opacity-40"
       )}
     >

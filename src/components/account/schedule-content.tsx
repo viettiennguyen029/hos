@@ -113,7 +113,7 @@ export function ScheduleContent({
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
-      <div className="flex flex-col gap-4 rounded-md bg-white/5 p-5">
+      <div className="flex flex-col gap-4 rounded-md bg-muted p-5">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-lg font-semibold text-foreground">Schedule</h2>
           <p className="text-xs text-muted-foreground">{weekRangeLabel}</p>
@@ -194,7 +194,7 @@ export function ScheduleContent({
       </div>
 
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-3 rounded-md bg-white/5 p-5">
+        <div className="flex flex-col gap-3 rounded-md bg-muted p-5">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground">
               {MONTH_LABELS[viewMonth]} {viewYear}
@@ -204,7 +204,7 @@ export function ScheduleContent({
                 type="button"
                 onClick={goToPrevMonth}
                 aria-label="Previous month"
-                className="flex size-6 items-center justify-center rounded-full bg-white/5 text-muted-foreground hover:bg-white/10"
+                className="flex size-6 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
               >
                 <ChevronLeft className="size-3.5" />
               </button>
@@ -212,14 +212,14 @@ export function ScheduleContent({
                 type="button"
                 onClick={goToNextMonth}
                 aria-label="Next month"
-                className="flex size-6 items-center justify-center rounded-full bg-white/5 text-muted-foreground hover:bg-white/10"
+                className="flex size-6 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
               >
                 <ChevronRight className="size-3.5" />
               </button>
               <button
                 type="button"
                 onClick={goToToday}
-                className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-foreground hover:bg-white/10"
+                className="rounded-full bg-muted px-2.5 py-1 text-xs text-foreground hover:bg-accent"
               >
                 Today
               </button>
@@ -248,7 +248,7 @@ export function ScheduleContent({
                     "mx-auto flex size-6 items-center justify-center rounded-full",
                     isSelected
                       ? "bg-primary text-primary-foreground"
-                      : "text-foreground hover:bg-white/10"
+                      : "text-foreground hover:bg-accent"
                   )}
                 >
                   {d}
@@ -265,7 +265,7 @@ export function ScheduleContent({
           ) : (
             <div className="flex flex-col gap-2">
               {upcomingEntries.map((entry, i) => (
-                <div key={i} className="flex items-center justify-between rounded-md bg-white/5 p-3">
+                <div key={i} className="flex items-center justify-between rounded-md bg-muted p-3">
                   <div className="flex flex-col">
                     <span className="text-sm font-medium text-foreground">{entry.title}</span>
                     <span className="text-xs text-muted-foreground">{entry.venue}</span>

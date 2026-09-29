@@ -44,8 +44,8 @@ export function BillingContent({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-3 rounded-md bg-white/5 p-4">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-foreground">
+        <div className="flex items-center gap-3 rounded-md bg-muted p-4">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
             <Ticket className="size-4" />
           </span>
           <div className="flex flex-col">
@@ -53,8 +53,8 @@ export function BillingContent({
             <span className="text-lg font-bold text-foreground">{totalBookings}</span>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-md bg-white/5 p-4">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-foreground">
+        <div className="flex items-center gap-3 rounded-md bg-muted p-4">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
             <DollarSign className="size-4" />
           </span>
           <div className="flex flex-col">
@@ -63,10 +63,10 @@ export function BillingContent({
           </div>
         </div>
         {bookingFrom && bookingTo && (
-          <div className="flex flex-col gap-3 rounded-md bg-white/5 p-4">
+          <div className="flex flex-col gap-3 rounded-md bg-muted p-4">
             <span className="text-sm font-semibold text-foreground">Booking Information</span>
             <div className="flex items-center gap-2 text-xs">
-              <span className="rounded-full bg-white/10 px-2 py-1 text-muted-foreground">DATE FROM</span>
+              <span className="rounded-full bg-muted px-2 py-1 text-muted-foreground">DATE FROM</span>
               <span className="text-foreground">
                 {bookingFrom} - {bookingTo}
               </span>
@@ -93,7 +93,7 @@ export function BillingContent({
               const isOpen = openGroups.includes(group.title);
               const groupTotal = group.lines.reduce((sum, l) => sum + l.amountVnd, 0);
               return (
-                <div key={group.title} className="overflow-hidden rounded-md bg-white/5">
+                <div key={group.title} className="overflow-hidden rounded-md bg-muted">
                   <button
                     type="button"
                     onClick={() => toggleGroup(group.title)}
@@ -130,7 +130,7 @@ export function BillingContent({
           </div>
         )}
 
-        <div className="flex items-center justify-between rounded-md bg-white/5 p-5">
+        <div className="flex items-center justify-between rounded-md bg-muted p-5">
           <span className="text-base font-semibold text-foreground">Total {role === "talent" ? "Income" : "Cost"}</span>
           <span className="text-lg font-bold text-foreground">{totalDisplay}</span>
         </div>

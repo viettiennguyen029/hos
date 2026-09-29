@@ -23,8 +23,8 @@ const statusStyles: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-500",
   quoted: "bg-blue-500/10 text-blue-400",
   accepted: "bg-green-500/10 text-green-500",
-  rejected: "bg-white/10 text-muted-foreground",
-  declined: "bg-white/10 text-muted-foreground",
+  rejected: "bg-muted text-muted-foreground",
+  declined: "bg-muted text-muted-foreground",
 };
 
 function formatVnd(n: number) {
@@ -69,13 +69,13 @@ export function QuotationsContent({
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       {quotations.length === 0 ? (
-        <p className="rounded-md bg-white/5 p-6 text-sm text-muted-foreground">
+        <p className="rounded-md bg-muted p-6 text-sm text-muted-foreground">
           {isTalent ? "No quote requests yet." : "No quote requests sent yet."}
         </p>
       ) : (
         <div className="flex flex-col gap-3">
           {quotations.map((q) => (
-            <div key={q.id} className="flex flex-col gap-3 rounded-md bg-white/5 p-5">
+            <div key={q.id} className="flex flex-col gap-3 rounded-md bg-muted p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-semibold text-foreground">{q.event_name}</span>
@@ -106,7 +106,7 @@ export function QuotationsContent({
               </div>
 
               {q.status === "quoted" && q.quoted_price_vnd && (
-                <div className="flex flex-col gap-1 rounded-[8px] bg-white/5 p-3">
+                <div className="flex flex-col gap-1 rounded-[8px] bg-muted p-3">
                   <span className="text-sm font-semibold text-foreground">
                     Quoted: {formatVnd(q.quoted_price_vnd)}
                   </span>
@@ -121,7 +121,7 @@ export function QuotationsContent({
                       type="button"
                       disabled={pendingId === q.id}
                       onClick={() => handle(() => declineQuotation(q.id), q.id, "Quotation declined.")}
-                      className="rounded-[6px] bg-white/5 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white/10"
+                      className="rounded-[6px] bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
                     >
                       Decline
                     </button>
@@ -140,7 +140,7 @@ export function QuotationsContent({
                       type="button"
                       disabled={pendingId === q.id}
                       onClick={() => handle(() => rejectQuotation(q.id), q.id, "Quotation rejected.")}
-                      className="rounded-[6px] bg-white/5 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white/10"
+                      className="rounded-[6px] bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
                     >
                       Reject
                     </button>

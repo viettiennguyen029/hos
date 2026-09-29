@@ -20,7 +20,7 @@ export default async function AdminDisputesPage() {
         {(bookings ?? []).map((booking) => (
           <div
             key={booking.id}
-            className="flex items-center justify-between gap-4 rounded-md bg-white/5 p-4"
+            className="flex items-center justify-between gap-4 rounded-md bg-muted p-4"
           >
             <div className="flex flex-col gap-1 text-sm">
               <span className="font-semibold text-foreground">Booking {booking.id}</span>

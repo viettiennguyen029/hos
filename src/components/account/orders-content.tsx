@@ -19,7 +19,7 @@ const statusStyles: Record<string, string> = {
   Dealing: "bg-amber-500/10 text-amber-500",
   Confirmed: "bg-blue-500/10 text-blue-400",
   Completed: "bg-green-500/10 text-green-500",
-  Cancelled: "bg-white/10 text-muted-foreground",
+  Cancelled: "bg-muted text-muted-foreground",
 };
 
 const SUB_FILTERS = ["All", "Upcoming", "Pending", "Dealing", "Confirmed", "Completed", "Cancelled"];
@@ -131,7 +131,7 @@ export function OrdersContent({
                 "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
                 activeFilter === filter
                   ? "bg-foreground text-background"
-                  : "bg-white/5 text-muted-foreground hover:bg-white/10"
+                  : "bg-muted text-muted-foreground hover:bg-accent"
               )}
             >
               {filter}
@@ -150,7 +150,7 @@ export function OrdersContent({
         </div>
       </div>
 
-      <div className="flex flex-col overflow-hidden rounded-md bg-white/5">
+      <div className="flex flex-col overflow-hidden rounded-md bg-muted">
         <div className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4 border-b border-border px-5 py-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">
           <span>Order</span>
           <span>{counterpartLabel}</span>
@@ -185,7 +185,7 @@ export function OrdersContent({
                   <Link
                     href={`/${role}/account/orders/${order.fullId}`}
                     aria-label="View order details"
-                    className="flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-white/5 text-foreground hover:bg-white/10"
+                    className="flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-muted text-foreground hover:bg-accent"
                   >
                     <ChevronRight className="size-4" />
                   </Link>
@@ -199,7 +199,7 @@ export function OrdersContent({
                     <button
                       type="button"
                       onClick={() => setReviewTarget({ id: order.fullId!, talentName: order.counterpartName })}
-                      className="rounded-[6px] bg-white/5 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white/10"
+                      className="rounded-[6px] bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
                     >
                       Leave a Review
                     </button>
