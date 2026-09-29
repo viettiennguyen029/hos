@@ -27,7 +27,7 @@ export function PromoCard({ title, ctaLabel, ctaHref, className, imageBackground
   }
 
   return (
-    <div className={`flex h-full flex-col justify-center gap-6 rounded-md bg-white/5 p-10 ${className ?? ""}`}>
+    <div className={`flex h-full flex-col justify-center gap-6 rounded-md bg-muted p-10 ${className ?? ""}`}>
       <p className="max-w-[350px] text-2xl font-medium tracking-[-0.03em] text-foreground">
         {title}
       </p>

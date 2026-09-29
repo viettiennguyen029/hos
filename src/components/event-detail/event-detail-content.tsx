@@ -27,7 +27,7 @@ export function EventDetailContent({
   return (
     <div className="flex flex-col gap-6 py-8">
       <div className="relative flex h-[280px] w-full flex-col justify-end overflow-hidden rounded-md">
-        <div className="absolute inset-0 flex items-center justify-center bg-white/10 text-muted-foreground">
+        <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground">
           {event.photo_urls[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={event.photo_urls[0]} alt="" className="size-full object-cover" />
@@ -58,7 +58,7 @@ export function EventDetailContent({
             <TabsTrigger
               key={t}
               value={t}
-              className="rounded-[8px] border-none bg-white/5 px-6 py-3 text-sm font-medium text-foreground shadow-none data-active:bg-foreground data-active:text-background dark:data-active:bg-foreground dark:data-active:text-background"
+              className="rounded-[8px] border-none bg-muted px-6 py-3 text-sm font-medium text-foreground shadow-none data-active:bg-foreground data-active:text-background dark:data-active:bg-foreground dark:data-active:text-background"
             >
               {t}
             </TabsTrigger>
@@ -75,7 +75,7 @@ export function EventDetailContent({
               )}
 
               <div className="flex flex-col gap-3">
-                <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-md bg-white/10 text-muted-foreground">
+                <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
                   {event.photo_urls[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -91,7 +91,7 @@ export function EventDetailContent({
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-white/10 text-muted-foreground"
+                      className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground"
                     >
                       {event.photo_urls[i] ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -122,7 +122,7 @@ export function EventDetailContent({
 
           {tab === "About Organizer" && (
             <div className="flex gap-6">
-              <div className="aspect-square w-[220px] shrink-0 overflow-hidden rounded-md bg-white/10">
+              <div className="aspect-square w-[220px] shrink-0 overflow-hidden rounded-md bg-muted">
                 {event.organizer.gallery_urls[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={event.organizer.gallery_urls[0]} alt="" className="size-full object-cover" />
@@ -136,7 +136,7 @@ export function EventDetailContent({
                 <h2 className="text-xl font-bold tracking-[-0.03em] text-foreground">
                   {event.organizer.full_name || "Organizer"}
                 </h2>
-                <div className="flex flex-col gap-3 rounded-md bg-white/5 p-5">
+                <div className="flex flex-col gap-3 rounded-md bg-muted p-5">
                   {event.organizer.city_name && (
                     <div className="flex items-center gap-3 text-sm text-foreground">
                       <MapPin className="size-4 shrink-0 text-muted-foreground" />
@@ -158,7 +158,7 @@ export function EventDetailContent({
                         href={link.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm text-foreground hover:bg-white/10"
+                        className="flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm text-foreground hover:bg-accent"
                       >
                         <LinkIcon className="size-4" />
                         {link.platform}

@@ -14,7 +14,7 @@ function JobsBadge({ data }: { data: EventListingSummary }) {
 export function EventListingCard({ data, href }: { data: EventListingSummary; href?: string }) {
   const content = (
     <>
-      <div className="absolute inset-0 flex items-center justify-center bg-white/10 text-muted-foreground">
+      <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground">
         {data.photo_urls[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={data.photo_urls[0]} alt="" className="size-full object-cover" />
@@ -50,7 +50,7 @@ export function EventListingCard({ data, href }: { data: EventListingSummary; hr
               </span>
             </span>
           </div>
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white opacity-0 transition-opacity group-hover:bg-black group-hover:text-white group-hover:opacity-100">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-white opacity-0 transition-opacity group-hover:bg-black group-hover:text-white group-hover:opacity-100">
             <ArrowRight className="size-4" />
           </span>
         </div>
@@ -59,7 +59,7 @@ export function EventListingCard({ data, href }: { data: EventListingSummary; hr
   );
 
   const className =
-    "group relative flex h-[420px] w-[289px] shrink-0 flex-col justify-between overflow-hidden rounded-md bg-white/10";
+    "group relative flex h-[420px] w-[289px] shrink-0 flex-col justify-between overflow-hidden rounded-md bg-muted";
 
   if (href) {
     return (
@@ -75,7 +75,7 @@ export function EventListingCard({ data, href }: { data: EventListingSummary; hr
 export function EventListingRow({ data, href }: { data: EventListingSummary; href?: string }) {
   const content = (
     <>
-      <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-muted-foreground">
+      <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-muted-foreground">
         {data.photo_urls[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={data.photo_urls[0]} alt="" className="size-full object-cover" />
@@ -91,13 +91,13 @@ export function EventListingRow({ data, href }: { data: EventListingSummary; hre
         <span className="text-foreground">{formatEventDay(data.event_date)}</span>
         <span className="text-muted-foreground">{formatTimeRange(data.start_time, data.end_time)}</span>
       </div>
-      <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1.5 text-xs font-medium text-foreground">
+      <span className="shrink-0 rounded-full bg-muted px-2.5 py-1.5 text-xs font-medium text-foreground">
         {String(data.filled_slots).padStart(2, "0")}/{data.total_slots} Jobs Offered
       </span>
     </>
   );
 
-  const className = "flex h-[76px] w-full items-center gap-4 rounded-md bg-white/5 px-3";
+  const className = "flex h-[76px] w-full items-center gap-4 rounded-md bg-muted px-3";
 
   if (href) {
     return (

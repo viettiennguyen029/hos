@@ -57,7 +57,7 @@ export function ListingCard({ data, href }: { data: ListingCardData; href?: stri
   );
 
   const className =
-    "relative flex h-[486px] w-[289px] shrink-0 flex-col justify-between overflow-hidden rounded-md bg-white/10";
+    "relative flex h-[486px] w-[289px] shrink-0 flex-col justify-between overflow-hidden rounded-md bg-muted";
 
   if (href) {
     return (
@@ -83,7 +83,7 @@ export function SearchResultCard({ data, href }: { data: ListingCardData; href?:
           // eslint-disable-next-line @next/next/no-img-element
           <img src={data.avatarUrl} alt="" className="absolute inset-0 size-full object-cover" />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/10 text-muted-foreground">
+          <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground">
             <ImageIcon className="size-8" />
           </div>
         )}
@@ -138,7 +138,7 @@ function ImagePlaceholder({ className, avatarUrl }: { className?: string; avatar
     return <img src={avatarUrl} alt="" className={`object-cover ${className ?? ""}`} />;
   }
   return (
-    <div className={`flex items-center justify-center bg-white/10 text-muted-foreground ${className ?? ""}`}>
+    <div className={`flex items-center justify-center bg-muted text-muted-foreground ${className ?? ""}`}>
       <ImageIcon className="size-6" />
     </div>
   );
@@ -164,7 +164,7 @@ export function ListingRow({ data, href }: { data: ListingCardData; href?: strin
     </>
   );
 
-  const className = "flex h-[76px] w-full items-center gap-4 rounded-md bg-white/5 px-3";
+  const className = "flex h-[76px] w-full items-center gap-4 rounded-md bg-muted px-3";
 
   if (href) {
     return (

@@ -52,7 +52,7 @@ export function TalentDetailContent({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={talent.cover_url} alt="" className="absolute inset-0 size-full object-cover" />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/10 text-muted-foreground">
+          <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground">
             <ImageIcon className="size-10" />
           </div>
         )}
@@ -71,7 +71,7 @@ export function TalentDetailContent({
             <TabsTrigger
               key={t}
               value={t}
-              className="rounded-[8px] border-none bg-white/5 px-6 py-3 text-sm font-medium text-foreground shadow-none data-active:bg-foreground data-active:text-background dark:data-active:bg-foreground dark:data-active:text-background"
+              className="rounded-[8px] border-none bg-muted px-6 py-3 text-sm font-medium text-foreground shadow-none data-active:bg-foreground data-active:text-background dark:data-active:bg-foreground dark:data-active:text-background"
             >
               {t}
             </TabsTrigger>
@@ -96,7 +96,7 @@ export function TalentDetailContent({
               )}
 
               <div className="flex flex-col gap-3">
-                <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-md bg-white/10 text-muted-foreground">
+                <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
                   {talent.gallery_urls[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={talent.gallery_urls[0]} alt="" className="size-full object-cover" />
@@ -109,7 +109,7 @@ export function TalentDetailContent({
                     {talent.gallery_urls.slice(1, 4).map((url) => (
                       <div
                         key={url}
-                        className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-white/10 text-muted-foreground"
+                        className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={url} alt="" className="size-full object-cover" />
@@ -132,7 +132,7 @@ export function TalentDetailContent({
                     {talent.keywords.map((keyword) => (
                       <span
                         key={keyword}
-                        className="rounded-full bg-white/5 px-4 py-2 text-sm text-foreground"
+                        className="rounded-full bg-muted px-4 py-2 text-sm text-foreground"
                       >
                         {keyword}
                       </span>
@@ -146,7 +146,7 @@ export function TalentDetailContent({
                   <h3 className="text-xl font-bold tracking-[-0.03em] text-foreground">
                     Service Provided
                   </h3>
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-4 rounded-md bg-white/5 p-6">
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-4 rounded-md bg-muted p-6">
                     {talent.services.map((service, index) => (
                       <div key={`${service}-${index}`} className="flex items-start gap-3">
                         <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-500" />
@@ -190,14 +190,14 @@ export function TalentDetailContent({
                 {talent.full_name}&rsquo;s confirmed engagements — avoid booking a colliding time.
               </p>
               {upcomingBusySlots.length === 0 && (
-                <p className="rounded-md bg-white/5 p-4 text-sm text-muted-foreground">
+                <p className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
                   No upcoming bookings on record.
                 </p>
               )}
               {upcomingBusySlots.map((slot, i) => (
                 <div
                   key={`${slot.date}-${slot.startTime}-${i}`}
-                  className="flex items-center justify-between rounded-md bg-white/5 p-4"
+                  className="flex items-center justify-between rounded-md bg-muted p-4"
                 >
                   <div className="flex items-center gap-3">
                     <CalendarDays className="size-5 text-muted-foreground" />
@@ -208,7 +208,7 @@ export function TalentDetailContent({
                       </span>
                     </div>
                   </div>
-                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-muted-foreground">
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                     Booked
                   </span>
                 </div>
@@ -225,10 +225,10 @@ export function TalentDetailContent({
                 <p className="text-sm text-muted-foreground">No reviews yet.</p>
               ) : (
                 reviewSummary.reviews.map((review) => (
-                  <div key={review.id} className="flex flex-col gap-2 rounded-md bg-white/5 p-5">
+                  <div key={review.id} className="flex flex-col gap-2 rounded-md bg-muted p-5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-foreground">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
                           {review.reviewer_name
                             .split(" ")
                             .map((w) => w[0])
@@ -267,7 +267,7 @@ export function TalentDetailContent({
                         href={link.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm text-foreground hover:bg-white/10"
+                        className="flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm text-foreground hover:bg-accent"
                       >
                         <LinkIcon className="size-4" />
                         {link.platform}
@@ -308,7 +308,7 @@ export function TalentDetailContent({
                   <h3 className="text-xl font-bold tracking-[-0.03em] text-foreground">
                     Service Provided
                   </h3>
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-4 rounded-md bg-white/5 p-6">
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-4 rounded-md bg-muted p-6">
                     {talent.services.map((service, index) => (
                       <div key={`${service}-${index}`} className="flex items-start gap-3">
                         <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-500" />
@@ -322,7 +322,7 @@ export function TalentDetailContent({
               {talent.achievements.length > 0 && (
                 <div className="flex flex-col gap-4">
                   <h3 className="text-xl font-bold tracking-[-0.03em] text-foreground">Achievement</h3>
-                  <div className="flex flex-col gap-3 rounded-md bg-white/5 p-6">
+                  <div className="flex flex-col gap-3 rounded-md bg-muted p-6">
                     {talent.achievements.map((item, index) => (
                       <div key={index} className="flex items-start gap-3">
                         <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-500" />
