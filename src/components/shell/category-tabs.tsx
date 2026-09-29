@@ -22,7 +22,7 @@ export function CategoryTabs({
             "shrink-0 rounded-[8px] px-6 py-3 text-sm font-medium tracking-[-0.03em] transition-colors",
             active === category
               ? "bg-foreground text-background"
-              : "bg-white/5 text-foreground hover:bg-white/10"
+              : "bg-muted text-foreground hover:bg-accent"
           )}
         >
           {category}

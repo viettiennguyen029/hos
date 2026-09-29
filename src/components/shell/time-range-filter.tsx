@@ -50,7 +50,7 @@ export function TimeRangeFilter({
 
   return (
     <Popover>
-      <PopoverTrigger className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/5 px-4 py-2.5 text-sm text-foreground outline-none transition-colors hover:bg-white/10">
+      <PopoverTrigger className="flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-4 py-2.5 text-sm text-foreground outline-none transition-colors hover:bg-accent">
         <span className="text-muted-foreground">Time</span>
         <span className="font-medium">{label}</span>
         <ChevronDown className="size-3.5 text-muted-foreground" />
@@ -61,7 +61,7 @@ export function TimeRangeFilter({
             <button
               type="button"
               onClick={() => setViewDate(new Date(year, month - 1, 1))}
-              className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-white/5"
+              className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
             >
               <ChevronLeft className="size-4" />
             </button>
@@ -71,7 +71,7 @@ export function TimeRangeFilter({
             <button
               type="button"
               onClick={() => setViewDate(new Date(year, month + 1, 1))}
-              className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-white/5"
+              className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
             >
               <ChevronRight className="size-4" />
             </button>

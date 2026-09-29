@@ -61,7 +61,7 @@ export function NotificationButton({ role, notifications }: { role: Role; notifi
         <button
           type="button"
           aria-label="Notifications"
-          className="relative flex size-[46px] shrink-0 items-center justify-center rounded-full bg-white/5 transition-colors hover:bg-white/10"
+          className="relative flex size-[46px] shrink-0 items-center justify-center rounded-full bg-muted transition-colors hover:bg-accent"
         >
           <Bell className="size-[22px] text-foreground" />
           {hasUnread && <span className="absolute top-2 right-2 size-2.5 rounded-full bg-primary" />}
@@ -76,9 +76,9 @@ export function NotificationButton({ role, notifications }: { role: Role; notifi
               <Link
                 key={n.id}
                 href={hrefForNotification(n.kind, role)}
-                className="flex items-start gap-3 p-4 transition-colors hover:bg-white/5"
+                className="flex items-start gap-3 p-4 transition-colors hover:bg-accent"
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-foreground">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                   {PERSON_KINDS.has(n.kind) ? <User className="size-4" /> : <CreditCard className="size-4" />}
                 </span>
                 <div className="flex-1">

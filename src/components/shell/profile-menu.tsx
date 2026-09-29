@@ -33,7 +33,7 @@ export function ProfileMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex shrink-0 items-center gap-5 rounded-full border border-[rgba(255,255,255,0.15)] bg-white/[0.08] py-1 pl-1.5 pr-3 outline-none">
+      <DropdownMenuTrigger className="flex shrink-0 items-center gap-5 rounded-full border border-border bg-muted py-1 pl-1.5 pr-3 outline-none">
         <span className="flex items-center gap-3">
           <Avatar size="sm" className="size-[38px]">
             {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}

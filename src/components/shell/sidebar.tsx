@@ -80,7 +80,7 @@ export function Sidebar({
         <Link
           href={`/${role}`}
           className={cn(
-            "relative flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground",
+            "relative flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
             isHome && "bg-primary/10 text-foreground"
           )}
         >
@@ -94,7 +94,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={() => setCategoryOpen((open) => !open)}
-          className="flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+          className="flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <Grid2x2 className="size-5 shrink-0" />
           <span className="flex-1 text-left">Category</span>
@@ -110,7 +110,7 @@ export function Sidebar({
               const isOpen = openSubcategory === category.id;
               return (
                 <div key={category.id}>
-                  <div className="flex w-full items-center gap-3 rounded-[8px] py-2.5 pl-8 pr-4 text-sm tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground">
+                  <div className="flex w-full items-center gap-3 rounded-[8px] py-2.5 pl-8 pr-4 text-sm tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                     <Link
                       href={`/${role}/discover?category=${encodeURIComponent(category.name)}`}
                       className="flex flex-1 items-center gap-3"
@@ -139,7 +139,7 @@ export function Sidebar({
                         <Link
                           key={sub.id}
                           href={`/${role}/discover?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(sub.name)}`}
-                          className="rounded-[8px] py-2 pl-14 pr-4 text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+                          className="rounded-[8px] py-2 pl-14 pr-4 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                         >
                           {sub.name}
                         </Link>
@@ -155,7 +155,7 @@ export function Sidebar({
         <div className="mt-2 flex flex-col gap-1">
           <Link
             href={`/${role}/about`}
-            className="flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+            className="flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <Info className="size-5 shrink-0" />
             <span className="flex-1">About</span>
@@ -163,7 +163,7 @@ export function Sidebar({
           </Link>
           <Link
             href={`/${role}/support`}
-            className="flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+            className="flex items-center gap-3 rounded-[8px] px-4 py-3 text-sm font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <Headset className="size-5 shrink-0" />
             <span className="flex-1">Support</span>
@@ -177,7 +177,7 @@ export function Sidebar({
           {[FacebookIcon, TwitterIcon, InstagramIcon, LinkedinIcon].map((Icon, i) => (
             <span
               key={i}
-              className="flex size-8 items-center justify-center rounded-full bg-white/5 text-foreground"
+              className="flex size-8 items-center justify-center rounded-full bg-muted text-foreground"
             >
               <Icon className="size-4" />
             </span>
