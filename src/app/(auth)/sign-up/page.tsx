@@ -45,21 +45,21 @@ export default function SignUpPage() {
           <AccountTypeOption
             icon={<Briefcase className="size-[22px]" />}
             title="Organizer Account"
-            description="Create organizer account to create events and booking talent"
+            description="Book talent for your event"
             selected={accountType === "organizer"}
             onClick={() => setAccountType("organizer")}
           />
           <AccountTypeOption
             icon={<User className="size-[22px]" />}
             title="Talent Account"
-            description="Create talent account to find and apply events"
+            description="Pick up gigs that fit your schedule, get paid"
             selected={accountType === "talent"}
             onClick={() => setAccountType("talent")}
           />
           <AccountTypeOption
             icon={<Speaker className="size-[22px]" />}
             title="Agency Account"
-            description="Create agency account to manage talents and apply events"
+            description="Manage your roster and book more gigs"
             selected={accountType === "agency"}
             onClick={() => setAccountType("agency")}
           />
@@ -190,11 +190,11 @@ function AccountTypeOption({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex flex-1 items-start gap-3.5 rounded-[6px] border border-transparent bg-white/5 px-4 py-3.5 text-left transition-colors",
+        "flex flex-1 items-start gap-3.5 rounded-[6px] border border-transparent bg-muted px-4 py-3.5 text-left transition-colors",
         selected && "border-primary bg-primary/5"
       )}
     >
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-[4.5px] bg-white/5 text-foreground">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-[4.5px] bg-muted text-foreground">
         {icon}
       </div>
       <div className="flex flex-col gap-1 text-sm tracking-[-0.03em] text-foreground">

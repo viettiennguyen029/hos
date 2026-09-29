@@ -35,3 +35,18 @@ describe("SignUpPage", () => {
     });
   });
 });
+
+describe("SignUpPage account-type copy", () => {
+  it("frames the talent account around side income, not career", () => {
+    render(<SignUpPage />);
+    expect(
+      screen.getByText(/pick up gigs that fit your schedule/i)
+    ).toBeInTheDocument();
+  });
+
+  it("keeps organizer and agency descriptions close to current copy", () => {
+    render(<SignUpPage />);
+    expect(screen.getByText(/book talent for your event/i)).toBeInTheDocument();
+    expect(screen.getByText(/manage your roster and book more gigs/i)).toBeInTheDocument();
+  });
+});
