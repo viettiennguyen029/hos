@@ -29,4 +29,13 @@ describe("globals.css :root theme", () => {
     expect(destructiveMatch).not.toBeNull();
     expect(destructiveMatch![1]).not.toBe(primaryMatch![1]);
   });
+
+  it("keeps accent distinct from muted so hover states are visible", () => {
+    const root = rootBlock();
+    const mutedMatch = root.match(/--muted:\s*(#[0-9a-fA-F]{6})/);
+    const accentMatch = root.match(/--accent:\s*(#[0-9a-fA-F]{6})/);
+    expect(mutedMatch).not.toBeNull();
+    expect(accentMatch).not.toBeNull();
+    expect(accentMatch![1]).not.toBe(mutedMatch![1]);
+  });
 });

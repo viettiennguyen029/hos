@@ -182,7 +182,7 @@ export function CheckoutContent({ cartItems }: { cartItems: CartItemWithPackage[
           })}
         </div>
 
-        <aside className="flex h-fit w-[400px] shrink-0 flex-col gap-5 rounded-md bg-muted p-6">
+        <aside className="flex h-fit w-[400px] shrink-0 flex-col gap-5 rounded-md border border-border bg-card p-6">
           <div className="flex flex-col gap-3">
             <h2 className="text-lg font-bold tracking-[-0.03em] text-foreground">Payment Method</h2>
             <div className="grid grid-cols-2 gap-3">

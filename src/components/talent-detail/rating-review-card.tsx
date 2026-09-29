@@ -11,7 +11,7 @@ function StarRow({ count, size = "size-4" }: { count: number; size?: string }) {
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
-          className={cn(size, i < count ? "fill-primary text-primary" : "text-muted-foreground")}
+          className={cn(size, i < count ? "fill-primary text-primary" : "text-muted-foreground/40")}
         />
       ))}
     </div>

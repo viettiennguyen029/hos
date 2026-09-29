@@ -183,7 +183,7 @@ export function Sidebar({
             </span>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground">Heart of Show Ltd. 2022</p>
+        <p className="text-xs text-muted-foreground">Hustle of Stars Ltd. 2026</p>
       </footer>
     </aside>
   );

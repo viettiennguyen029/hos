@@ -75,7 +75,7 @@ export function QuotationsContent({
       ) : (
         <div className="flex flex-col gap-3">
           {quotations.map((q) => (
-            <div key={q.id} className="flex flex-col gap-3 rounded-md bg-muted p-5">
+            <div key={q.id} className="flex flex-col gap-3 rounded-md border border-border bg-card p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-semibold text-foreground">{q.event_name}</span>

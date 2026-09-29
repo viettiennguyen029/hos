@@ -22,7 +22,7 @@ export function buildIcsContent(event: IcsEventInput): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Heart of Show//Booking//EN",
+    "PRODID:-//Hustle of Stars//Booking//EN",
     "BEGIN:VEVENT",
     `UID:${event.uid}`,
     `DTSTART:${toCompactDateTime(event.date, event.startTime)}`,

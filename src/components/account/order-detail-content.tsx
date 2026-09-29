@@ -433,7 +433,7 @@ function PaymentDialog({
 }) {
   const transferNote = `HOS${bookingId.slice(0, 8).toUpperCase()}`;
   const bankAccountNumber = "0000111222333";
-  const bankName = "Heart of Show Bank";
+  const bankName = "Hustle of Stars Bank";
   const qrValue = `Bank: ${bankName}\nAccount: ${bankAccountNumber}\nAmount: ${amountVnd}\nNote: ${transferNote}`;
 
   return (

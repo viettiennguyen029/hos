@@ -305,7 +305,7 @@ export function KycWizard({ role }: { role: Role }) {
           >
             <Field
               label="Company Name"
-              placeholder="Heart of Show Agency Co., Ltd"
+              placeholder="Hustle of Stars Agency Co., Ltd"
               value={values.companyName}
               onChange={set("companyName")}
               required

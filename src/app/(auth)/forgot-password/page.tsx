@@ -123,7 +123,7 @@ function ForgotPasswordForm() {
     <AuthCard
       icon={<CircleCheck className="size-[46px] text-green-500" />}
       title="Password Reset Succesfully"
-      description="Now you can sign in to HOS with new password"
+      description="Now you can sign in to Hustle of Stars with new password"
     >
       <Button asChild className="h-[52px] w-full rounded-[6px] text-base font-semibold">
         <Link href="/sign-in">Back to Sign in</Link>

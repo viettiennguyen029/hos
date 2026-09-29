@@ -24,7 +24,7 @@ export function ApplyPanel({ event, role }: { event: EventWithSlots; role: Role 
   const hasSlots = event.slots.length > 0;
 
   return (
-    <aside className="flex h-fit w-[380px] shrink-0 flex-col gap-5 rounded-md bg-muted p-6">
+    <aside className="flex h-fit w-[380px] shrink-0 flex-col gap-5 rounded-md border border-border bg-card p-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-bold tracking-[-0.03em] text-foreground">
           {`${event.name} Event's Available Slot`}
